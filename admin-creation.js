@@ -4,8 +4,8 @@ const bcrypt = require('bcryptjs');
 const sqlite3 = require('sqlite3').verbose();
 
 // --- CONFIGURE YOUR NEW ADMIN CREDENTIALS HERE ---
-const NEW_ADMIN_USERNAME = 'KaSo'; // e.g., 'superadmin'
-const NEW_ADMIN_PASSWORD = 'KaSo@7274143$'; // Choose a strong password
+const NEW_ADMIN_USERNAME = 'ZaHooR_aHmAd'; // e.g., 'superadmin'
+const NEW_ADMIN_PASSWORD = 'ZaHooR@7274143$'; // Choose a strong password
 // ---------------------------------------------------
 
 if (!NEW_ADMIN_USERNAME || !NEW_ADMIN_PASSWORD || NEW_ADMIN_PASSWORD.length < 8) {
