@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CashEye - Admin Area</title>
+    <link rel="stylesheet" href="admin_style.css">
+</head>
+<body>
+
+<!-- Login Section -->
+    <div id="loginSection">
+        <div class="login-container">
+            <h1>CashEye Admin</h1>
+            <form id="adminLoginForm">
+                <input type="text" id="adminUser" name="username" placeholder="Username" required>
+                <input type="password" id="adminPass" name="password" placeholder="Password" required>
+                <p id="loginError" class="error-message"></p>
+                <button type="submit">Login</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel Section (Initially Hidden) -->
+    <div id="adminPanelSection" class="hidden">
+
+        <button type="button" id="sidebarToggleBtn">☰</button>
+
+        <!-- Sidebar -->
+        <aside class="admin-sidebar" id="adminSidebar">
+             <h2>Admin Menu</h2>
+             <nav>
+                 <ul>
+                     <li><button type="button" class="active" data-section="dashboard">Dashboard</button></li>
+                     <li><button type="button" data-section="users">Manage Users</button></li>
+                     <li><button type="button" data-section="deposits">Pending Deposits</button></li>
+                     <li><button type="button" data-section="withdrawals">Pending Withdrawals</button></li>
+                     <li><button type="button" data-section="history">All Transactions</button></li>
+                     <li><button type="button" data-section="settings">Platform Settings</button></li>
+                     <li><button type="button" data-section="managePlans">Manage Plans</button></li> <!-- MODIFIED: Added Manage Plans -->
+                     <li><button type="button" data-section="manageAdmins" title="UI Demo Only">Manage Admins (UI)</button></li>
+                 </ul>
+             </nav>
+             <button type="button" id="adminLogoutBtn" class="logout-btn">Logout</button>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="admin-main-content">
+            <!-- Dashboard Section -->
+            <section id="dashboard" class="admin-section active">
+                 <h1>Admin Dashboard</h1>
+                 <div class="dashboard-cards">
+                     <div class="card total-users"><h3>Total Users</h3><div class="count" id="totalUsersCount">0</div></div>
+                     <div class="card pending-deposit"><h3>Pending Deposits</h3><div class="count" id="pendingDepositsCount">0</div></div>
+                     <div class="card pending-withdrawal"><h3>Pending Withdrawals</h3><div class="count" id="pendingWithdrawalsCount">0</div></div>
+                     <div class="card"><h3>Total Platform Balance</h3><div class="count" id="totalPlatformBalance">0 PKR</div></div>
+                 </div>
+            </section>
+
+            <!-- Manage Users Section -->
+            <section id="users" class="admin-section">
+                 <h2>Manage Users</h2>
+                 <input type="text" class="search-bar" id="userSearchInput" placeholder="Search by name or email...">
+                 <div class="table-container">
+                     <table id="usersTable">
+                         <thead><tr><th>Name</th><th>Email</th><th>Balance (PKR)</th><th>Status</th><th>Actions</th></tr></thead>
+                         <tbody id="usersTableBody">
+                             <tr><td colspan="5" class="no-data-message">Loading users...</td></tr>
+                         </tbody>
+                     </table>
+                 </div>
+            </section>
+
+             <!-- User Profile Section (View/Edit) -->
+            <section id="userProfileSection" class="admin-section">
+                 <h1 id="userProfileHeading">User Profile</h1>
+                 <button type="button" id="backToUsersBtn" class="action-btn btn-cancel" style="margin-bottom: 20px;">← Back to Users List</button>
+
+                 <div id="profileActions">
+                     <button type="button" id="editProfileBtn" class="action-btn btn-edit">Edit Profile</button>
+                     <button type="button" id="saveProfileBtn" class="action-btn btn-save hidden">Save Changes</button>
+                     <button type="button" id="cancelEditBtn" class="action-btn btn-cancel hidden">Cancel Edit</button>
+                 </div>
+
+                 <div class="profile-grid">
+                     <div class="profile-card">
+                         <h3>Basic Information</h3>
+                         <dl>
+                             <dt>Name:</dt>
+                             <dd>
+                                 <span class="profile-view-field" id="profileUserName"></span>
+                                 <input type="text" id="editProfileUserName" class="edit-field hidden" name="name">
+                             </dd>
+                             <dt>Email:</dt>
+                             <dd><span id="profileUserEmail"></span></dd>
+                             <dt>Status:</dt>
+                             <dd>
+                                 <span class="profile-view-field" id="profileUserStatus"></span>
+                                 <select id="editProfileUserStatus" class="edit-field hidden" name="status">
+                                     <option value="Active">Active</option>
+                                     <option value="Blocked">Blocked</option>
+                                 </select>
+                             </dd>
+                              <dt>Balance (PKR):</dt>
+                             <dd>
+                                 <span class="profile-view-field" id="profileUserBalance"></span>
+                                 <input type="number" step="0.01" id="editProfileUserBalance" class="edit-field hidden" name="balance">
+                             </dd>
+                         </dl>
+                     </div>
+                      <div class="profile-card">
+                         <h3>Referral Information</h3>
+                         <dl>
+                             <dt>Referral Code:</dt>
+                             <dd><span id="profileUserReferralCode"></span></dd>
+                             <dt>Referred By (Email):</dt>
+                             <dd><span id="profileUserReferredBy"></span></dd>
+                             <dt>First Investment Made:</dt>
+                             <dd><span id="profileUserHasInvested"></span></dd>
+                             <dt>Active Plan:</dt>
+                             <dd><span id="profileUserActivePlan">N/A</span></dd>
+                             <dt>Last Check-in:</dt>
+                             <dd><span id="profileUserLastCheckIn">N/A</span></dd>
+                         </dl>
+                     </div>
+                 </div>
+                 <div class="profile-card admin-subsection">
+                     <h3>Users Referred by <span class="profile-view-field" id="profileReferralsByName">this user</span></h3>
+                     <div id="profileReferralsListContainer" class="table-container">
+                         <table id="profileReferralsTable">
+                             <thead><tr><th>Name</th><th>Email</th><th>Signup Date</th></tr></thead>
+                             <tbody id="profileReferralsTableBody"></tbody>
+                         </table>
+                         <p id="profileNoReferralsMsg" class="no-data-message hidden">This user has not referred anyone.</p>
+                     </div>
+                 </div>
+                 <div class="profile-card admin-subsection">
+                      <h3>Transaction History (<span class="profile-view-field" id="profileTransactionsForName">User</span>)</h3>
+                      <div id="profileTransactionsListContainer" class="table-container">
+                           <table id="profileTransactionsTable">
+                               <thead><tr><th>Type</th><th>Status</th><th>Amount (PKR)</th><th class="wrap">Description</th><th>Date</th></tr></thead>
+                               <tbody id="profileTransactionsTableBody"></tbody>
+                           </table>
+                            <p id="profileNoTransactionsMsg" class="no-data-message hidden">No transactions found for this user.</p>
+                      </div>
+                 </div>
+            </section>
+
+            <!-- Deposits Section -->
+            <section id="deposits" class="admin-section">
+                 <h2>Pending Deposits</h2>
+                 <div class="table-container">
+                     <table>
+                         <thead><tr><th>User Email</th><th>Amount (PKR)</th><th>Method</th><th>TxID/Details</th><th>Submitted</th><th>Actions</th></tr></thead>
+                         <tbody id="pendingDepositsTableBody">
+                              <tr><td colspan="6" class="no-data-message">Loading pending deposits...</td></tr>
+                         </tbody>
+                     </table>
+                 </div>
+            </section>
+
+            <!-- Withdrawals Section -->
+            <section id="withdrawals" class="admin-section">
+                 <h2>Pending Withdrawals</h2>
+                 <div class="table-container">
+                     <table>
+                         <thead><tr><th>User Email</th><th>Amount (PKR)</th><th>Method</th><th>Account No.</th><th>Requested</th><th>Actions</th></tr></thead>
+                         <tbody id="pendingWithdrawalsTableBody">
+                              <tr><td colspan="6" class="no-data-message">Loading pending withdrawals...</td></tr>
+                         </tbody>
+                     </table>
+                 </div>
+            </section>
+
+            <!-- Transaction History Section -->
+            <section id="history" class="admin-section">
+                 <h2>All Transaction History</h2>
+                 <input type="text" id="allHistorySearchInput" class="search-bar" placeholder="Search by email, type, status, desc...">
+                 <div class="table-container">
+                     <table>
+                         <thead><tr><th>User Email</th><th>Type</th><th>Status</th><th>Amount (PKR)</th><th class="wrap">Description</th><th>Date</th></tr></thead>
+                         <tbody id="allHistoryTableBody">
+                              <tr><td colspan="6" class="no-data-message">Loading all transactions...</td></tr>
+                         </tbody>
+                     </table>
+                </div>
+            </section>
+
+            <!-- Platform Settings Section -->
+            <section id="settings" class="admin-section">
+                <h1>Platform Settings</h1>
+                <div class="card">
+                    <h3>Deposit Account Details</h3>
+                    <form id="depositSettingsForm">
+                        <h4>Easypaisa</h4>
+                        <label for="epSettingName">Account Name:</label>
+                        <input type="text" id="epSettingName" name="easypaisa.name">
+                        <label for="epSettingNumber">Account Number</label>
+                        <input type="text" id="epSettingNumber" name="easypaisa.number">
+                        <label for="epSettingInstructions">Instructions:</label>
+                        <textarea id="epSettingInstructions" name="easypaisa.instructions" rows="3"></textarea>
+
+                        <h4 class="mt-1">JazzCash</h4>
+                        <label for="jcSettingName">Account Name:</label>
+                        <input type="text" id="jcSettingName" name="jazzcash.name">
+                        <label for="jcSettingNumber">Account Number:</label>
+                        <input type="text" id="jcSettingNumber" name="jazzcash.number">
+                        <label for="jcSettingInstructions">Instructions:</label>
+                        <textarea id="jcSettingInstructions" name="jazzcash.instructions" rows="3"></textarea>
+                        <button type="submit" class="action-btn btn-save mt-1">Save Deposit Settings</button>
+                    </form>
+                </div>
+
+                <div class="card mt-1">
+                    <h3>Investment Plans (Read-only Overview)</h3>
+                    <p>This provides a quick overview. For adding or editing plans, go to the "Manage Plans" section.</p>
+                    <div id="adminInvestmentPlansDisplay" class="table-container">
+                        <table>
+                            <thead><tr><th>Name</th><th>Invest Amount</th><th>Daily Return</th><th>Duration (Days)</th><th class="wrap">Description</th><th>Status</th></tr></thead>
+                            <tbody id="adminPlansTableBody">
+                                <tr><td colspan="6" class="no-data-message">Loading plans...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Manage Investment Plans Section -->
+            <section id="managePlans" class="admin-section">
+                <h1>Manage Investment Plans</h1>
+
+                <div class="card">
+                    <h3 id="planFormHeading">Add New Investment Plan</h3>
+                    <form id="managePlanForm">
+                        <input type="hidden" id="planIdInput" name="planId">
+
+                        <div>
+                            <label for="planNameInput">Plan Name:</label>
+                            <input type="text" id="planNameInput" name="name" required>
+                        </div>
+
+                        <div>
+                            <label for="planInvestmentAmountInput">Investment Amount (PKR):</label>
+                            <input type="number" id="planInvestmentAmountInput" name="investmentAmount" step="0.01" min="1" required>
+                        </div>
+
+                        <div>
+                            <label for="planDailyReturnInput">Daily Return (PKR):</label>
+                            <input type="number" id="planDailyReturnInput" name="dailyReturn" step="0.01" min="0" required>
+                        </div>
+
+                        <div>
+                            <label for="planDurationDaysInput">Duration (Days):</label>
+                            <input type="number" id="planDurationDaysInput" name="durationDays" min="1" required>
+                        </div>
+
+                        <div>
+                            <label for="planDescriptionTextarea">Description (Optional):</label>
+                            <textarea id="planDescriptionTextarea" name="description" rows="3"></textarea>
+                        </div>
+
+                        <div>
+                            <label for="planIsActiveCheckbox" style="display: inline-block; margin-right: 10px;">Is Active:</label>
+                            <input type="checkbox" id="planIsActiveCheckbox" name="isActive" checked style="vertical-align: middle;">
+                            <small>(Users can invest in this plan if checked)</small>
+                        </div>
+
+                        <div class="form-actions" style="margin-top: 20px; padding-top: 15px; border-top: 1px solid var(--admin-border-color);">
+                            <button type="submit" id="savePlanBtn" class="action-btn btn-save">Add Plan</button>
+                            <button type="button" id="clearPlanFormBtn" class="action-btn btn-cancel" style="margin-left: 10px;">Clear Form</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div class="card" style="margin-top: 25px;">
+                    <h3>Existing Investment Plans</h3>
+                    <div id="existingPlansDisplay" class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    <th>Invest Amt.</th>
+                                    <th>Daily Return</th>
+                                    <th>Duration (Days)</th>
+                                    <th class="wrap">Description</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="existingPlansTableBody">
+                                <tr>
+                                    <td colspan="8" class="no-data-message">Loading plans...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Manage Admins Section (UI Demo) -->
+            <section id="manageAdmins" class="admin-section">
+                 <h1>Manage Administrators (UI Demo)</h1>
+                 <p style="color: var(--admin-red);"><strong>Warning:</strong> Admin management is for UI demonstration only. For actual security, this must be handled entirely on the backend with proper role management.</p>
+                 <div class="admin-subsection">
+                    <h3>Add New Admin (UI Only)</h3>
+                    <form id="addAdminForm" class="add-admin-form">
+                        <input type="text" id="newAdminUser" placeholder="New Admin Username" required>
+                        <input type="password" id="newAdminPass" placeholder="New Admin Password" required>
+                        <button type="submit">Add Admin to List</button>
+                    </form>
+                </div>
+                 <div class="admin-subsection">
+                    <h3>Existing Admins (UI List)</h3>
+                    <div class="table-container">
+                        <table>
+                            <thead><tr><th>Username</th><th>Actions</th></tr></thead>
+                            <tbody id="adminListBody">
+                                <tr>
+                                    <td>professor</td>
+                                    <td><button type="button" class="action-btn btn-reject" disabled title="Cannot remove default admin">Remove</button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="admin_script.js" defer></script>
+</body>
+</html>

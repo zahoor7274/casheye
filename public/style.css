@@ -1,0 +1,449 @@
+/* --- Global Styles --- */
+:root {
+  --primary-color: #007bff;
+  --primary-dark: #0056b3;
+  --secondary-color: #6c757d;
+  --success-color: #28a745;
+  --danger-color: #dc3545;
+  --warning-color: #ffc107;
+  --info-color: #17a2b8;
+  --light-bg: #f8f9fa;
+  --white: #fff;
+  --grey-text: #6c757d;
+  --dark-text: #343a40;
+  --border-color: #dee2e6;
+  --card-shadow: 0 4px 8px rgba(0,0,0,0.08);
+  --border-radius: 8px;
+}
+body {
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  margin: 0;
+  padding: 15px;
+  background: var(--light-bg);
+  color: var(--dark-text);
+  line-height: 1.6;
+}
+a {
+  color: var(--primary-color);
+  text-decoration: none;
+}
+a:hover {
+  color: var(--primary-dark);
+  text-decoration: underline;
+}
+
+/* --- Card Styling --- */
+.card {
+  background: var(--white);
+  padding: 20px;
+  margin: 15px 0;
+  border-radius: var(--border-radius);
+  box-shadow: var(--card-shadow);
+  border: 1px solid var(--border-color);
+}
+.card h2 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: var(--primary-color);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 10px;
+  font-size: 1.5em;
+}
+
+/* --- Form Elements --- */
+label {
+  display: block;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-size: 0.9em;
+  color: var(--dark-text);
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+select {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0 15px 0; /* Default margin-bottom for spacing */
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+  box-sizing: border-box;
+  font-size: 1em;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+input:focus, select:focus {
+  border-color: var(--primary-color);
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+
+input[type="file"] {
+  width: 100%;
+  padding: 10px; /* More consistent padding */
+  margin: 8px 0 5px 0; /* Specific margin for file input */
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-sizing: border-box;
+  font-size: 1em; /* Match other inputs */
+}
+
+.form-text { /* Helper text, e.g., for file input */
+  display: block;
+  font-size: 0.85em;
+  color: var(--grey-text);
+  margin-top: -2px; /* Adjust to be closer to the input */
+  margin-bottom: 15px; /* Ensure space before next element like a button */
+}
+
+
+button {
+  background: var(--primary-color);
+  color: var(--white);
+  border: none;
+  padding: 12px 20px;
+  margin-top: 10px; /* Default top margin for buttons */
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1em;
+  width: 100%;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+form button[type="submit"] { /* Ensure submit buttons in forms also get this width */
+    width: 100%;
+}
+button:hover {
+  background: var(--primary-dark);
+  transform: translateY(-1px);
+}
+button:active {
+   transform: translateY(0px);
+}
+button:disabled {
+    background-color: var(--secondary-color); /* Removed !important, specificity should handle this */
+    border-color: var(--secondary-color);    /* Removed !important */
+    color: #ccc;                             /* Removed !important */
+    cursor: not-allowed;                     /* Removed !important */
+    transform: translateY(0px);              /* Removed !important */
+    opacity: 0.65; /* Adding opacity is a common pattern for disabled buttons */
+}
+
+.link-button {
+  background: none;
+  border: none;
+  color: var(--primary-color);
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  font-size: 0.9em;
+  width: auto; /* Link buttons should not be full width by default */
+  margin-top: 0; /* Reset margin for link buttons */
+}
+.link-button:hover {
+    color: var(--primary-dark);
+    background: none; /* Ensure no bg change on hover */
+    transform: none; /* Ensure no transform on hover */
+}
+.link-button:disabled { /* Style for disabled link buttons if needed */
+    color: var(--grey-text);
+    text-decoration: none;
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+p { margin-top: 15px; font-size: 0.95em; }
+
+/* --- Utility --- */
+.hidden { display: none !important; } /* Keeping !important here as it's a common utility to forcefully hide */
+.text-center { text-align: center; }
+.mt-1 { margin-top: 1rem !important; }
+.mb-1 { margin-bottom: 1rem !important; }
+
+/* --- Dashboard Specific --- */
+.welcome-banner {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    color: var(--white);
+    padding: 25px;
+    border-radius: var(--border-radius);
+    margin-bottom: 20px;
+    box-shadow: 0 4px 10px rgba(0, 123, 255, 0.3);
+}
+.welcome-banner #userName { font-weight: bold; font-size: 1.2em; }
+.balance {
+    font-weight: bold;
+    font-size: 1.8em;
+    margin-top: 10px;
+    display: block;
+    color: var(--white);
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+}
+
+.referral-info {
+  margin-top: 20px;
+  padding: 15px;
+  background: #e0f7fa;
+  border: 1px solid #00acc1;
+  border-left: 5px solid #00acc1;
+  border-radius: var(--border-radius);
+  font-size: 0.95em;
+}
+.referral-info b {
+  word-break: break-all;
+  font-family: 'Courier New', Courier, monospace;
+  background: #b2ebf2;
+  padding: 2px 5px;
+  border-radius: 4px;
+  display: inline-block;
+  margin-top: 5px;
+}
+.referral-info small { display: block; margin-top: 8px; color: var(--grey-text); }
+
+/* --- Toggle Menu --- */
+.menu-toggle {
+  background: var(--secondary-color);
+  color: white;
+  padding: 10px 15px;
+  border: none;
+  width: auto;
+  min-width: 60px;
+  font-size: 1.5em;
+  line-height: 1;
+  border-radius: var(--border-radius);
+  margin-bottom: 15px;
+  position: fixed;
+  top: 15px;
+  right: 15px;
+  z-index: 1001;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.menu-toggle:hover {
+  background: #5a6268;
+}
+.nav {
+  display: none;
+  flex-direction: column;
+  background: var(--dark-text);
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 250px;
+  height: 100%;
+  padding-top: 60px;
+  box-shadow: -3px 0 10px rgba(0,0,0,0.2);
+  z-index: 1000;
+  transition: transform 0.3s ease-in-out;
+  transform: translateX(100%);
+}
+.nav.open {
+  display: flex;
+  transform: translateX(0);
+}
+.nav button { /* This targets buttons inside the nav */
+  background: none;
+  color: var(--light-bg);
+  padding: 15px 20px;
+  text-align: left;
+  border: none;
+  border-bottom: 1px solid #495057;
+  font-weight: normal;
+  width: 100%;
+  border-radius: 0;
+  font-size: 1em;
+  margin-top: 0;
+  transition: background-color 0.2s ease;
+}
+.nav button:last-child { border-bottom: none; }
+.nav button:hover {
+    background-color: #495057;
+    transform: none;
+}
+.nav button.close-menu {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 1.8em;
+  color: var(--light-bg);
+  background: none;
+  border: none;
+  padding: 5px;
+  line-height: 1;
+  width: auto;
+  border-bottom: none;
+}
+ .nav button.close-menu:hover { background: none; }
+
+/* --- Transaction & Referral List Styling --- */
+#historyList .transaction-item,
+#referralList .referral-item {
+  padding: 15px;
+  border-bottom: 1px solid var(--border-color);
+  font-size: 0.95em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  transition: background-color 0.2s ease;
+}
+#historyList .transaction-item:last-child,
+#referralList .referral-item:last-child { border-bottom: none; }
+
+#historyList .transaction-item:hover,
+#referralList .referral-item:hover { background-color: #f1f1f1; }
+
+.transaction-details { flex-grow: 1; margin-right: 15px;}
+.transaction-amount {
+    font-weight: bold;
+    min-width: 100px;
+    text-align: right;
+    font-size: 1.1em;
+    font-family: 'Consolas', 'Monaco', monospace;
+}
+/* Transaction Type Colors */
+.transaction-type-deposit,
+.transaction-type-referral-bonus,
+.transaction-type-daily-earnings,
+.transaction-type-admin-adjustment.positive {
+    color: var(--success-color);
+}
+.transaction-type-withdrawal,
+.transaction-type-investment,
+.transaction-type-admin-adjustment.negative {
+    color: var(--danger-color);
+}
+
+/* Status Styling for Transactions */
+.transaction-status {
+    font-size: 0.85em;
+    font-weight: bold;
+    display: inline-block;
+    padding: 3px 8px;
+    border-radius: 12px; /* Pill shape */
+    margin-left: 8px;
+    border: 1px solid transparent;
+    vertical-align: middle;
+}
+.status-pending { color: #856404; background-color: #fff3cd; border-color: #ffeeba; }
+.status-approved, .status-completed { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+.status-rejected { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+
+.transaction-date { font-size: 0.85em; color: var(--grey-text); display: block; margin-top: 5px; width: 100%; } /* Added width: 100% for better wrapping control if needed */
+
+#noHistoryMessage,
+#noReferralsMessage { text-align: center; color: var(--grey-text); margin-top: 25px; font-style: italic; }
+
+/* Referral List Specific */
+.referral-details { flex-grow: 1; }
+.referral-name { font-weight: bold; }
+.referral-email { font-size: 0.9em; color: var(--grey-text); margin-left: 8px; }
+
+/* Investment Plan Cards (Container and individual plan cards) */
+#investmentPlansContainer .card { /* Style for dynamically added plan cards */
+    background: #e9ecef;
+    border-left: 5px solid var(--primary-color);
+    margin-top: 15px; /* Spacing between plan cards */
+}
+#investmentPlansContainer .card h3 { /* If plans have titles */
+    color: var(--primary-dark);
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+#investmentPlansContainer .card p {
+    margin-bottom: 8px;
+    font-size: 0.95em;
+}
+#investmentPlansContainer .card button { /* Invest button inside plan cards */
+    margin-top: 15px;
+    background-color: var(--success-color);
+    width: auto; /* Don't make invest buttons full width unless desired */
+    padding: 10px 15px;
+}
+#investmentPlansContainer .card button:hover {
+    background-color: #218838; /* Darker green */
+}
+
+/* --- Deposit Account Information Box --- */
+.deposit-account-info-box {
+  background-color: #e9f5ff;
+  border-left: 5px solid var(--info-color);
+  padding: 15px;
+  margin-bottom: 25px;
+  border-radius: var(--border-radius);
+}
+.deposit-account-info-box h3 {
+  margin-top: 0;
+  color: var(--primary-dark);
+  font-size: 1.25em;
+  border-bottom: 1px solid #bde0fe;
+  padding-bottom: 10px;
+  margin-bottom: 15px;
+}
+#platformDepositAccountsContainer .account-details { /* If you wrap each account type */
+    margin-bottom: 15px;
+}
+#platformDepositAccountsContainer .account-details:last-child {
+    margin-bottom: 0;
+}
+#platformDepositAccountsContainer h4 { /* For Easypaisa, JazzCash titles */
+  margin-top: 0;
+  margin-bottom: 8px;
+  color: var(--dark-text);
+  font-size: 1.1em;
+}
+#platformDepositAccountsContainer p {
+  margin-top: 5px;
+  margin-bottom: 8px;
+  font-size: 0.95em;
+  line-height: 1.5;
+}
+#platformDepositAccountsContainer p strong { color: var(--dark-text); }
+#platformDepositAccountsContainer p em { /* For instructions */
+  color: var(--secondary-color);
+  font-size: 0.9em;
+  display: block;
+  margin-top: 3px;
+}
+
+/* --- Daily Check-in Section Styles --- */
+#dailyCheckInSection {
+    background-color: #fff9e6; /* Light yellow background */
+    border-left: 5px solid var(--warning-color);
+}
+#dailyCheckInSection h2 {
+    color: var(--primary-dark); /* Consistent with other card titles */
+}
+#dailyCheckInButton {
+    background-color: var(--success-color); /* Green for positive action */
+    margin-top: 15px;
+    width: auto; /* Let button size to content or set specific width */
+    padding: 10px 20px;
+}
+#dailyCheckInButton:hover {
+    background-color: #218838; /* Darker green */
+}
+/* Disabled state is handled by general button:disabled rule */
+
+#checkInStatusText {
+    font-weight: 500;
+    margin-bottom: 10px; /* Space above button */
+}
+#nextCheckInTime {
+    font-size: 0.9em;
+    color: var(--secondary-color);
+    margin-top: 10px; /* Space below button if visible */
+}
+
+
+/* --- Responsive --- */
+ @media (max-width: 768px) {
+    body { padding: 10px; }
+    .card { padding: 15px; }
+    .card h2 { font-size: 1.3em; }
+    .balance { font-size: 1.5em; }
+    .transaction-item, .referral-item { flex-direction: column; align-items: flex-start; }
+    .transaction-amount { text-align: left; margin-top: 5px; min-width: auto; }
+    .transaction-date { margin-top: 8px; }
+    .menu-toggle { top: 10px; right: 10px; font-size: 1.3em; }
+    .nav { width: 200px; }
+ }

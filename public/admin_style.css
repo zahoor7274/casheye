@@ -1,0 +1,549 @@
+/* --- Global Styles --- */
+:root {
+    --admin-primary: #343a40; /* Dark Grey */
+    --admin-secondary: #6c757d; /* Medium Grey */
+    --admin-light-bg: #f8f9fa; /* Very Light Grey */
+    --admin-white: #fff;
+    --admin-blue: #007bff;
+    --admin-green: #28a745;
+    --admin-red: #dc3545;
+    --admin-yellow: #ffc107;
+    --admin-cyan: #17a2b8;
+    --admin-border-color: #dee2e6;
+    --admin-card-shadow: 0 4px 8px rgba(0,0,0,0.07);
+    --admin-border-radius: 8px;
+    --sidebar-width: 240px;
+}
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    background-color: var(--admin-light-bg);
+    transition: padding-left 0.3s ease-in-out;
+    min-height: 100vh;
+    font-size: 16px;
+}
+/*
+  Utility class for hiding elements.
+  !important is often used here to ensure it overrides other display properties.
+  Use with care, primarily for JS-controlled visibility.
+*/
+.hidden { display: none !important; }
+* { box-sizing: border-box; }
+
+/* --- Login Section --- */
+#loginSection {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+.login-container {
+    background-color: var(--admin-white);
+    padding: 35px 45px;
+    border-radius: var(--admin-border-radius);
+    box-shadow: var(--admin-card-shadow);
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+}
+.login-container h1 {
+    color: var(--admin-primary);
+    margin-bottom: 30px;
+    font-size: 1.9em;
+    font-weight: 600;
+}
+.login-container input[type="text"],
+.login-container input[type="password"] {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 18px;
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    font-size: 1em;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.login-container input[type="text"]:focus,
+.login-container input[type="password"]:focus {
+    border-color: var(--admin-blue);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+}
+.login-container button {
+    width: 100%;
+    padding: 12px;
+    background-color: var(--admin-blue);
+    color: var(--admin-white);
+    border: none;
+    border-radius: var(--admin-border-radius);
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.2s ease;
+    margin-top: 10px;
+}
+.login-container button:hover { background-color: #0056b3; }
+.error-message {
+    color: var(--admin-red);
+    margin-top: 15px;
+    font-size: 0.9em;
+    height: 1.2em; /* Provides space even if empty, preventing layout shifts */
+    text-align: left;
+}
+
+/* --- Admin Panel: Sidebar --- */
+.admin-sidebar {
+    width: var(--sidebar-width);
+    background-color: var(--admin-primary);
+    color: #f1f1f1;
+    padding: 20px 0;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 3px 0 8px rgba(0,0,0,0.15);
+    position: fixed;
+    top: 0;
+    left: calc(-1 * var(--sidebar-width));
+    height: 100%;
+    z-index: 1000;
+    transition: left 0.3s ease-in-out;
+    overflow-y: auto; /* For scrollable sidebar if content exceeds height */
+}
+body.sidebar-visible .admin-sidebar { left: 0; }
+.admin-sidebar h2 {
+    text-align: center;
+    margin: 0 15px 25px 15px;
+    color: var(--admin-light-bg);
+    font-size: 1.6em;
+    font-weight: 600;
+    border-bottom: 1px solid #495057;
+    padding-bottom: 15px;
+}
+.admin-sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    flex-grow: 1; /* Allows logout button to be pushed to bottom if needed */
+}
+.admin-sidebar nav li button {
+    display: block;
+    color: #dee2e6;
+    text-decoration: none;
+    padding: 14px 20px;
+    margin: 0 10px 5px 10px;
+    border-radius: var(--admin-border-radius);
+    background: none;
+    border: none;
+    width: calc(100% - 20px); /* Adjust width considering margins */
+    text-align: left;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap; /* Prevent text wrapping on nav buttons */
+}
+.admin-sidebar nav li button.active,
+.admin-sidebar nav li button:hover {
+    background-color: #495057;
+    color: var(--admin-white);
+}
+.admin-sidebar .logout-btn {
+    margin: 20px 10px 10px 10px; /* Pushes it down a bit */
+    background-color: var(--admin-red);
+    color: var(--admin-white);
+    text-align: center;
+    font-weight: bold;
+    width: calc(100% - 20px); /* Match nav button width */
+    padding: 14px 20px;
+    border-radius: var(--admin-border-radius);
+    cursor: pointer;
+    font-size: 1em;
+    border: none;
+    /* flex-shrink: 0; Optional: if sidebar content is short, prevent it from shrinking */
+}
+.admin-sidebar .logout-btn:hover { background-color: #c82333; }
+
+/* --- Admin Panel: Main Content & Toggle --- */
+#sidebarToggleBtn {
+    position: fixed;
+    top: 15px;
+    left: 15px;
+    z-index: 1001;
+    background-color: var(--admin-primary);
+    color: var(--admin-white);
+    border: none;
+    padding: 10px 14px;
+    border-radius: var(--admin-border-radius);
+    cursor: pointer;
+    font-size: 1.3em;
+    line-height: 1; /* Ensure icon is centered vertically */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    transition: left 0.3s ease-in-out, background-color 0.2s ease;
+}
+#sidebarToggleBtn:hover { background-color: #5a6268; }
+body.sidebar-visible #sidebarToggleBtn { left: calc(var(--sidebar-width) + 15px); }
+
+.admin-main-content {
+    padding: 25px;
+    padding-top: 80px; /* Space for fixed toggle button and header */
+    margin-left: 0;
+    transition: margin-left 0.3s ease-in-out;
+}
+body.sidebar-visible .admin-main-content { margin-left: var(--sidebar-width); }
+
+.admin-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+.admin-section.active { display: block; }
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.admin-main-content h1, .admin-main-content h2 {
+    color: var(--admin-primary);
+    border-bottom: 2px solid var(--admin-border-color);
+    padding-bottom: 12px;
+    margin-bottom: 25px;
+    font-weight: 600;
+}
+.admin-main-content h1 { font-size: 2em; }
+.admin-main-content h2 { font-size: 1.6em; }
+.admin-main-content .mt-1 { margin-top: 1rem !important; } /* Utility class */
+
+/* --- Dashboard Cards --- */
+.dashboard-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 25px;
+}
+.card { /* General card styling, also used in dashboard */
+    background-color: var(--admin-white);
+    padding: 25px;
+    border-radius: var(--admin-border-radius);
+    box-shadow: var(--admin-card-shadow);
+    border: 1px solid var(--admin-border-color);
+    border-left: 6px solid var(--admin-blue); /* Default left border color */
+    position: relative;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.1);
+}
+.card.pending-deposit { border-left-color: var(--admin-yellow); }
+.card.pending-withdrawal { border-left-color: var(--admin-red); }
+.card.total-users { border-left-color: var(--admin-green); }
+.card h3 {
+    margin-top: 0;
+    font-size: 1.15em;
+    color: var(--admin-secondary);
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+.card .count {
+    font-size: 2.4em;
+    font-weight: 700;
+    color: var(--admin-primary);
+    line-height: 1.2;
+}
+
+/* --- Tables --- */
+.table-container {
+    overflow-x: auto; /* Allows horizontal scrolling for wide tables */
+    background-color: var(--admin-white); /* Added background to container for better shadow appearance */
+    box-shadow: var(--admin-card-shadow);
+    border-radius: var(--admin-border-radius);
+    margin-top: 25px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    /* Removed margin-top from table itself as it's on container */
+    /* Removed background-color, box-shadow, border-radius, overflow from table as they are on container */
+}
+th, td {
+    border: 1px solid var(--admin-border-color);
+    padding: 14px 16px;
+    text-align: left;
+    vertical-align: middle;
+    font-size: 0.98em;
+    white-space: nowrap; /* Default, can be overridden by .wrap */
+}
+th.wrap, td.wrap { white-space: normal; } /* Allow text wrapping in specific columns */
+thead {
+    background-color: #e9ecef; /* Light grey for header */
+    color: #495057; /* Darker text for header */
+    font-weight: 600;
+}
+tbody tr:nth-child(even) { background-color: var(--admin-light-bg); }
+tbody tr:hover { background-color: #e2e6ea; } /* Consistent hover for table rows */
+
+/* Action Buttons (Generalized) */
+td .action-btn, .action-btn {
+    padding: 6px 12px;
+    border-radius: var(--admin-border-radius);
+    border: none;
+    cursor: pointer;
+    color: white; /* Default, overridden by specific button types */
+    font-size: 0.9em;
+    margin: 2px 4px; /* Spacing between buttons */
+    transition: opacity 0.2s ease;
+    white-space: nowrap;
+    font-weight: 500;
+}
+.btn-approve { background-color: var(--admin-green); }
+.btn-reject { background-color: var(--admin-red); }
+.btn-view { background-color: var(--admin-blue); }
+.btn-block { background-color: var(--admin-yellow); color: var(--admin-primary); }
+.btn-unblock { background-color: var(--admin-secondary); }
+.btn-edit { background-color: var(--admin-yellow); color: var(--admin-primary); }
+.btn-save { background-color: var(--admin-green); }
+.btn-cancel { background-color: var(--admin-secondary); }
+
+.action-btn:hover { opacity: 0.85; }
+.action-btn:disabled, button[disabled] { /* General disabled style */
+    cursor: not-allowed;
+    opacity: 0.6;
+    background-color: var(--admin-secondary); /* Muted background */
+    /* color: #aaa; Optionally mute text color further */
+}
+
+
+.no-data-message {
+    text-align: center;
+    color: var(--admin-secondary);
+    padding: 20px;
+    font-style: italic;
+}
+.search-bar {
+    margin-bottom: 20px;
+    padding: 10px 12px;
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    width: 100%;
+    max-width: 300px;
+    font-size: 1em;
+}
+
+/* --- Subsections & Admin Management --- */
+.admin-subsection {
+    margin-top: 35px;
+    padding-top: 25px;
+    border-top: 1px solid #eee;
+}
+.admin-subsection h3 {
+    margin-bottom: 20px;
+    color: #495057;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+.add-admin-form input[type="text"],
+.add-admin-form input[type="password"],
+.add-admin-form button {
+    display: block; /* Ensures they take full width of their container */
+    width: 100%;
+    max-width: 400px; /* Limit width of form elements */
+    padding: 12px;
+    margin-bottom: 15px;
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    font-size: 1em;
+}
+.add-admin-form button {
+    background-color: var(--admin-cyan);
+    color: var(--admin-white);
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+.add-admin-form button:hover { background-color: #138496; }
+/* #adminListBody td button[disabled] is covered by general .action-btn:disabled */
+
+/* --- User Profile Section --- */
+#userProfileSection .profile-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 25px;
+    margin-bottom: 35px;
+}
+.profile-card { /* Specific to user profile, overrides general .card if needed */
+    background: var(--admin-white);
+    padding: 20px; /* Slightly less padding than general .card if desired */
+    border-radius: var(--admin-border-radius);
+    box-shadow: var(--admin-card-shadow);
+    border: 1px solid var(--admin-border-color);
+    border-left: none; /* Reset general card left border or set specific one if needed */
+}
+.profile-card h3 {
+    margin-top: 0;
+    margin-bottom: 20px;
+    color: var(--admin-blue);
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+.profile-card dl { margin: 0; }
+.profile-card dt {
+    font-weight: bold;
+    color: #495057;
+    margin-top: 12px;
+    font-size: 0.9em;
+    text-transform: uppercase;
+}
+.profile-card dd {
+    margin-left: 0;
+    margin-bottom: 12px;
+    color: var(--admin-primary);
+    word-break: break-all; /* Break long strings like referral codes */
+    font-size: 1.05em;
+}
+.profile-card .edit-field { /* Class for editable fields in profile */
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    margin-top: 4px;
+    margin-bottom: 5px;
+    font-size: 1em;
+}
+.profile-card select.edit-field {
+    /* padding: 8px 10px; Ensure consistent padding with inputs */
+    height: auto; /* Allow select to size naturally */
+}
+#profileActions {
+    margin-top: 0px; /* Removed default margin if any */
+    margin-bottom: 25px;
+    display: flex;
+    gap: 10px; /* Space between action buttons */
+}
+#profileTransactionsTable th, #profileTransactionsTable td,
+#profileReferralsTable th, #profileReferralsTable td {
+    padding: 10px 12px; /* Slightly reduced padding for denser tables in profile */
+    font-size: 0.95em;
+    white-space: normal; /* Allow wrapping in profile tables by default */
+}
+
+
+/* --- Platform Settings Section --- */
+#settings .card {
+    border-left: 6px solid var(--admin-cyan); /* Distinguish settings cards */
+}
+#settings .card h3 {
+    color: var(--admin-cyan);
+}
+#depositSettingsForm label {
+    display: block;
+    margin-top: 15px;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+#depositSettingsForm input[type="text"],
+#depositSettingsForm textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    font-size: 1em;
+    margin-bottom: 10px; /* Space between inputs/textareas */
+}
+#depositSettingsForm textarea {
+    resize: vertical; /* Allow vertical resize */
+    min-height: 80px;
+}
+#depositSettingsForm h4 { /* For Easypaisa, JazzCash subheadings */
+    margin-top: 20px;
+    margin-bottom: 10px;
+    color: var(--admin-primary);
+    font-weight: 600;
+    border-bottom: 1px dashed var(--admin-border-color);
+    padding-bottom: 8px;
+}
+#adminInvestmentPlansDisplay table { /* Table specifically for plans display */
+    margin-top: 15px;
+}
+/* admin_style.css */
+/* ... (your existing styles) ... */
+
+/* admin_style.css - ensure these exist or add them */
+.status-active {
+    color: var(--admin-green); /* Or your success color */
+    font-weight: bold;
+}
+
+.status-inactive {
+    color: var(--admin-red); /* Or your danger/warning color */
+    font-weight: bold;
+}
+
+/* For the form */
+#managePlanForm label {
+    display: block;
+    margin-top: 10px;
+    margin-bottom: 3px;
+    font-weight: 500;
+}
+#managePlanForm input[type="text"],
+#managePlanForm input[type="number"],
+#managePlanForm textarea {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid var(--admin-border-color);
+    border-radius: var(--admin-border-radius);
+    box-sizing: border-box;
+}
+#managePlanForm input[type="checkbox"] {
+    margin-right: 5px;
+    vertical-align: middle;
+}
+#managePlanForm .form-actions button {
+    padding: 10px 15px; /* Adjust if needed */
+}
+/* Add styles for .form-actions if needed */
+
+
+/* --- Responsive Adjustments --- */
+@media (max-width: 992px) {
+    :root { --sidebar-width: 220px; }
+    /* body.sidebar-visible .admin-main-content { margin-left: var(--sidebar-width); } Implicitly handled by var change */
+    /* body.sidebar-visible #sidebarToggleBtn { left: calc(var(--sidebar-width) + 15px); } Implicitly handled */
+    .dashboard-cards { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+    .card .count { font-size: 2em; }
+}
+
+@media (max-width: 768px) {
+     body { font-size: 15px; }
+     body.sidebar-visible .admin-main-content { margin-left: 0; } /* Sidebar overlays content */
+     .admin-sidebar { box-shadow: 0 0 15px rgba(0,0,0,0.2); } /* Stronger shadow when overlaying */
+     #sidebarToggleBtn {
+         /* left: 15px; Already default */
+         background-color: rgba(52, 58, 64, 0.9); /* Slightly transparent when overlaying */
+     }
+     body.sidebar-visible #sidebarToggleBtn {
+        /* left: 15px; Keep toggle button in place on mobile when sidebar is open */
+     }
+     .admin-main-content { padding: 20px; padding-top: 75px; }
+     .admin-main-content h1 { font-size: 1.8em; }
+     .admin-main-content h2 { font-size: 1.4em; }
+     th, td { font-size: 0.9em; padding: 10px 12px; white-space: normal; } /* Wrap table cell content on mobile */
+     td .action-btn, .action-btn { font-size: 0.85em; padding: 5px 10px; }
+     .dashboard-cards { gap: 15px; }
+     .card { padding: 20px; }
+     .card .count { font-size: 1.8em; }
+     .search-bar { max-width: none; width: 100%; }
+     #profileActions { flex-wrap: wrap; } /* Allow profile action buttons to wrap */
+ }
+
+ @media (max-width: 480px) {
+     body { font-size: 14px; }
+     .login-container { padding: 25px; }
+     .admin-main-content h1 { font-size: 1.6em; }
+     .admin-main-content h2 { font-size: 1.3em; }
+     th, td { font-size: 0.85em; padding: 8px 10px;}
+     .dashboard-cards { grid-template-columns: 1fr; /* Stack cards on very small screens */ }
+     .card .count { font-size: 1.6em; }
+     #userProfileSection .profile-grid { grid-template-columns: 1fr; }
+     .login-container h1 { font-size: 1.6em; }
+     .admin-sidebar h2 { font-size: 1.4em; }
+     .admin-sidebar nav li button { padding: 12px 15px; font-size: 0.95em; }
+     #depositSettingsForm input[type="text"],
+     #depositSettingsForm textarea { font-size: 0.95em; }
+ }

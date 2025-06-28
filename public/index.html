@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>CashEye - Online Earning Platform</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css"> <!-- Your existing style.css -->
+</head>
+<body>
+
+<!-- Signup Page -->
+<div id="signupPage" class="card">
+  <h2>Signup - CashEye</h2>
+  <form id="signupForm">
+    <input type="text" id="signupName" name="name" placeholder="Full Name" required>
+    <input type="email" id="signupEmail" name="email" placeholder="Email Address" required>
+    <input type="password" id="signupPass" name="password" placeholder="Password" required>
+    <input type="text" id="referralCodeInput" name="referralCode" placeholder="Referral Code (Optional)">
+    <button type="submit">Create Account</button>
+  </form>
+  <p>Already have an account? <button type="button" class="link-button" id="showLoginBtn">Login Here</button></p>
+</div>
+
+<!-- Login Page -->
+<div id="loginPage" class="card hidden">
+  <h2>Login - CashEye</h2>
+  <form id="loginForm">
+    <input type="email" id="loginEmail" name="email" placeholder="Email Address" required>
+    <input type="password" id="loginPass" name="password" placeholder="Password" required>
+    <button type="submit">Login</button>
+  </form>
+  <p>Don't have an account? <button type="button" class="link-button" id="showSignupBtn">Signup Now</button></p>
+</div>
+
+<!-- Dashboard -->
+<div id="dashboard" class="hidden">
+  <button type="button" class="menu-toggle" id="menuToggleBtn">☰</button>
+  <nav class="nav" id="menu">
+    <button type="button" class="close-menu" id="closeMenuBtn">✕</button>
+    <button type="button" data-section="home">Dashboard</button>
+    <button type="button" data-section="deposit">Deposit Funds</button>
+    <button type="button" data-section="withdraw">Withdraw Funds</button>
+    <button type="button" data-section="plans">Investment Plans</button>
+    <button type="button" data-section="history">Transaction History</button>
+    <button type="button" data-section="referrals">My Referrals</button>
+    <button type="button" data-section="changePassword">Change Password</button>
+    <button type="button" id="logoutBtn" style="color: var(--warning-color);">Logout</button>
+  </nav>
+
+  <main id="dashboardContent">
+      <div id="home" class="section">
+        <div class="welcome-banner">
+           Welcome back to <b>CashEye</b>,<br><span id="userName">User</span>! <!-- JS: Use textContent for userName -->
+           <span class="balance">Balance: <span id="balance">0.00</span> PKR</span> <!-- JS: Use textContent for balance -->
+        </div>
+
+        <div id="dailyCheckInSection" class="card">
+            <h2>Daily Check-in</h2>
+            <p id="checkInStatusText">Loading check-in status...</p> <!-- JS: Use textContent -->
+            <button type="button" id="dailyCheckInButton">Claim Daily Earnings</button>
+            <p id="nextCheckInTime" class="hidden" style="font-size: 0.9em; color: var(--secondary-color); margin-top: 10px;"></p> <!-- JS: Use textContent -->
+        </div>
+
+        <div class="card">
+          <p>
+            <b>CashEye</b> is a smart digital earning platform designed to help you grow your money consistently and securely.
+            Choose from flexible investment plans with daily guaranteed returns and watch your balance grow — all with zero complexity and full transparency.
+          </p>
+          <div class="referral-info">
+            Share your Referral Code: <b id="referralCode">LOADING...</b><br> <!-- JS: Use textContent for referralCode -->
+            <small>Ask friends to enter this code during signup. When they make their first investment, you get a bonus credited instantly!</small>
+          </div>
+          <button type="button" class="mt-1" data-section-target="plans">View Investment Plans</button>
+        </div>
+      </div>
+
+      <div id="deposit" class="section hidden card">
+        <h2>Deposit Funds</h2>
+        <div class="deposit-account-info-box card">
+          <h3>Our Deposit Accounts:</h3>
+          <p>Please send your payment to one of the accounts listed below. After payment, note down the <strong>Transaction ID (TID/TrxID)</strong> and <strong>take a screenshot of the payment confirmation</strong>. Then, submit your deposit request using the form below.</p>
+          <div id="platformDepositAccountsContainer">
+              <!-- JS: Dynamically populated. Use createElement and textContent for account details to avoid XSS if data is not pre-sanitized by backend. -->
+              <p>Loading deposit account details...</p>
+          </div>
+        </div>
+        <form id="depositForm">
+            <p class="mt-1"><strong>Submit Your Deposit Request:</strong></p>
+            <label for="depositAmount">Amount in PKR:</label>
+            <input type="number" id="depositAmount" name="amount" placeholder="Amount in PKR" min="1" required>
+            <label for="depositMethod">Payment Method Used:</label>
+            <select id="depositMethod" name="method" required>
+              <option value="">-- Select Method --</option>
+              <!-- Options might be populated by JS. If so, use textContent for option text. -->
+              <option value="Easypaisa">Easypaisa</option>
+              <option value="JazzCash">JazzCash</option>
+            </select>
+            <label for="depositTxId">Transaction ID (TID / TrxID):</label>
+            <input type="text" id="depositTxId" name="transactionId" placeholder="Enter Transaction ID" required>
+            <label for="depositScreenshot">Payment Screenshot:</label>
+            <input type="file" id="depositScreenshot" name="screenshot" accept="image/png, image/jpeg, image/gif" required>
+            <small class="form-text">Upload a clear screenshot of your payment confirmation (PNG, JPG, GIF).</small>
+            <button type="submit">Submit Deposit Request</button>
+        </form>
+      </div>
+
+      <div id="withdraw" class="section hidden card">
+        <h2>Withdraw Funds</h2>
+        <form id="withdrawForm">
+            <p>Withdrawals are processed within 24-48 hours after approval.</p>
+            <label for="withdrawAmount">Amount to Withdraw (PKR):</label>
+            <input type="number" id="withdrawAmount" name="amount" placeholder="Amount to Withdraw (PKR)" min="1" required>
+            <label for="withdrawMethod">Withdrawal Method:</label>
+            <select id="withdrawMethod" name="method" required>
+              <option value="">-- Select Method --</option>
+               <!-- Options might be populated by JS. If so, use textContent for option text. -->
+              <option value="Easypaisa">Easypaisa</option>
+              <option value="JazzCash">JazzCash</option>
+            </select>
+            <label for="withdrawAccount">Your Account Number:</label>
+            <input type="text" id="withdrawAccount" name="accountNumber" placeholder="Your Account Number (e.g., 03xxxxxxxxx)" required>
+            <button type="submit">Submit Withdraw Request</button>
+        </form>
+      </div>
+
+      <div id="plans" class="section hidden card">
+        <h2>Investment Plans</h2>
+        <p>Choose a plan that suits you. Returns are added daily.</p>
+        <div id="investmentPlansContainer">
+            <!-- JS: Dynamically populated. Use createElement and textContent for plan details to avoid XSS if plan names/descriptions are not pre-sanitized by backend. -->
+            <p>Loading investment plans...</p>
+        </div>
+      </div>
+
+      <div id="history" class="section hidden card">
+          <h2>Transaction History</h2>
+          <div id="historyList">
+               <!-- JS: Dynamically populated list items. Use createElement and textContent for transaction details to avoid XSS. -->
+               <p>Loading transaction history...</p>
+          </div>
+           <p id="noHistoryMessage" class="hidden">No transactions recorded yet.</p>
+      </div>
+
+      <div id="referrals" class="section hidden card">
+          <h2>My Referrals</h2>
+          <p>Users who signed up using your referral code:</p>
+          <div id="referralList">
+              <!-- JS: Dynamically populated list items. Use createElement and textContent for referral details to avoid XSS. -->
+              <p>Loading your referrals...</p>
+          </div>
+           <p id="noReferralsMessage" class="hidden">You haven't referred anyone yet.</p>
+      </div>
+
+      <div id="changePassword" class="section hidden card">
+          <h2>Change Your Password</h2>
+          <form id="changePasswordForm">
+               <p>Enter your current password and choose a new one.</p>
+              <label for="currentPassword">Current Password:</label>
+              <input type="password" id="currentPassword" name="currentPassword" placeholder="Current Password" required>
+              <label for="newPassword">New Password:</label>
+              <input type="password" id="newPassword" name="newPassword" placeholder="New Password" required>
+              <label for="confirmNewPassword">Confirm New Password:</label>
+              <input type="password" id="confirmNewPassword" name="confirmNewPassword" placeholder="Confirm New Password" required>
+              <button type="submit">Update Password</button>
+          </form>
+      </div>
+  </main>
+</div>
+
+<script src="script.js" defer></script> <!-- Your adapted script.js -->
+</body>
+</html>
