@@ -4,8 +4,17 @@ const { Pool } = require('pg'); // Use the 'pg' library
 // The Pool will automatically use the DATABASE_URL environment variable on Railway.
 // For local testing, you might need to set up a local Postgres instance and create a .env file
 // with a DATABASE_URL, but let's focus on deploying first.
+console.log("DATABASE_LOG: Checking for DATABASE_URL environment variable...");
+if (!process.env.DATABASE_URL) {
+    console.error("DATABASE_LOG_FATAL: DATABASE_URL environment variable is not set!");
+    console.error("DATABASE_LOG_FATAL: Application cannot connect to the database. Exiting.");
+    // Throwing an error will crash the app immediately and give a clear message.
+    throw new Error("FATAL: Missing DATABASE_URL environment variable.");
+}
+console.log("DATABASE_LOG: DATABASE_URL is present.");
+
 const pool = new Pool({
-    connectionString: process.env.DATABASE_PUBLIC_URL,
+    connectionString: process.env.DATABASE_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
