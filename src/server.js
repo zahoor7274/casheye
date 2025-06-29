@@ -80,11 +80,11 @@ app.use((err, req, res, next) => {
 });
 
 // --- Start Server ---
- app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+// app.listen(PORT, () => {
+//    console.log(`Server is running on http://localhost:${PORT}`);
     // Initialize database tables when server starts
-        db.initTables().then(() => {
-        console.log('Database tables initialized/checked.');
+//        db.initTables().then(() => {
+//        console.log('Database tables initialized/checked.');
 /*        if (process.env.INITIAL_ADMIN_CREATED !== 'true') { // Check the flag
             const { createDefaultAdmin } = require('./models/adminModel');
             // Make createDefaultAdmin use env vars for username/password or pass them
@@ -102,10 +102,10 @@ app.use((err, req, res, next) => {
         } else {
             console.log("Default admin creation skipped (INITIAL_ADMIN_CREATED is true).");
         }*/
-    }).catch(err => {
-        console.error('Failed to initialize database tables:', err);
-    });
-});
+//    }).catch(err => {
+//        console.error('Failed to initialize database tables:', err);
+//    });
+//});
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
