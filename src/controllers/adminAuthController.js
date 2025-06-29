@@ -4,11 +4,6 @@ const jwt = require('jsonwebtoken');
 const { db } = require('../config/database');
 const { findAdminByUsername } = require('../models/adminModel'); // We already created this
 
-// src/controllers/adminAuthController.js
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { findAdminByUsername } = require('../models/adminModel');
-
 exports.adminLogin = async (req, res) => {
     console.log("--- ADMIN LOGIN ATTEMPT START ---");
 
