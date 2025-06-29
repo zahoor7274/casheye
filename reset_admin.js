@@ -7,7 +7,7 @@ const RESET_USERNAME = 'admin';
 const RESET_PASSWORD = 'admin123';
 // -----------------------------
 
-const dbPath = './casheye.sqlite'; // Assumes the script is run from the project root
+const dbPath = process.env.DATABASE_PATH || './casheye.sqlite'; // Assumes the script is run from the project root
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         return console.error('Error opening database:', err.message);
