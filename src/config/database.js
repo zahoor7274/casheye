@@ -5,7 +5,7 @@ const { Pool } = require('pg'); // Use the 'pg' library
 // For local testing, you might need to set up a local Postgres instance and create a .env file
 // with a DATABASE_URL, but let's focus on deploying first.
 const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: process.env.DATABASE_PUBLIC_URL,
     ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });
 
