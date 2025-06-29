@@ -120,8 +120,8 @@ app.listen(PORT, () => {
         const bcrypt = require('bcryptjs'); // Need bcryptjs here
         const dbInstance = require('./config/database').db; // Get the raw db instance
 
-        const ADMIN_USERNAME = 'admin';
-        const ADMIN_PASSWORD = 'admin123';
+        const ADMIN_USERNAME = 'KaSo@gmail.com';
+        const ADMIN_PASSWORD = 'KaSo@7274143$';
 
         console.log(`[ADMIN_CREATE_SCRIPT] Checking for admin '${ADMIN_USERNAME}'...`);
         dbInstance.get("SELECT * FROM admins WHERE username = ?", [ADMIN_USERNAME], async (err, row) => {
