@@ -28,16 +28,20 @@ const createDefaultAdmin = () => { // Remove parameters
             }
         });
     });
-};
- 
-
+}; 
 const findAdminByUsername = (username) => {
     return new Promise((resolve, reject) => {
+        // The query is case-sensitive by default in SQLite unless you use COLLATE NOCASE.
+        // Let's assume username is stored and checked with exact case for now.
         db.get("SELECT * FROM admins WHERE username = ?", [username], (err, row) => {
-            if (err) return reject(err);
-            resolve(row);
+            if (err) {
+                console.error("DB_ERROR in findAdminByUsername:", err);
+                return reject(err);
+            }
+            resolve(row); // 'row' will be the admin object or `undefined` if not found
         });
     });
 };
+
 
 module.exports = { createDefaultAdmin, findAdminByUsername };
