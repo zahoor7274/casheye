@@ -11,7 +11,7 @@ const app = express();
 console.log("SERVER_LOG: [6] Express app initialized.");
 app.set('trust proxy', 1);
 console.log("SERVER_LOG: [6a] 'trust proxy' enabled.");
-const PORT = process.env.PORT || 3000;
+//const PORT = process.env.PORT || 3000;
 
 // --- Database Setup (SQLite) ---
 const db = require('./config/database'); // We'll create this next
