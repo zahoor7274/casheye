@@ -1,8 +1,22 @@
 // src/config/database.js
 const sqlite3 = require('sqlite3').verbose();
+const fs = require('fs');
+const path = require('path');
 const bcrypt = require('bcryptjs');
 
 const dbPath = process.env.DATABASE_PATH || './casheye.sqlite';
+try {
+    const dbDir = path.dirname(dbPath); // Gets the directory part of the path (e.g., '/data')
+    if (!fs.existsSync(dbDir)) {
+        console.log(`DATABASE_LOG: Directory ${dbDir} does not exist. Creating it...`);
+        fs.mkdirSync(dbDir, { recursive: true }); // 'recursive: true' creates parent directories if needed
+        console.log(`DATABASE_LOG: Successfully created directory ${dbDir}.`);
+    }
+} catch (error) {
+    console.error("DATABASE_LOG_FATAL: Could not create directory for database.", error);
+    // If we can't create the directory, the app can't run, so we should exit.
+    process.exit(1);
+}
 const db = new sqlite3.Database(dbPath, (err) => {
     if (err) {
         console.error('Error opening database:', err.message);

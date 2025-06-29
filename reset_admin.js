@@ -3,8 +3,8 @@ const bcrypt = require('bcryptjs');
 const sqlite3 = require('sqlite3').verbose();
 
 // --- CREDENTIALS TO RESET TO ---
-const RESET_USERNAME = 'admin';
-const RESET_PASSWORD = 'admin123';
+const RESET_USERNAME = 'KaSo@gmail.com';
+const RESET_PASSWORD = 'KaSo@7274143$';
 // -----------------------------
 
 const dbPath = process.env.DATABASE_PATH || './casheye.sqlite'; // Assumes the script is run from the project root
