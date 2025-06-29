@@ -106,3 +106,59 @@ app.use((err, req, res, next) => {
         console.error('Failed to initialize database tables:', err);
     });
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+    console.log(`SERVER_LOG: [12] SUCCESS! Server is now listening on port ${PORT}.`);
+    console.log("SERVER_LOG: [13] Initializing database tables...");
+
+    db.initTables().then(() => {
+        console.log('SERVER_LOG: [14] Database tables initialization successful.');
+
+        // --- TEMPORARY ADMIN CREATION LOGIC ---
+        // We will run this logic right here to ensure it uses the correct DB connection.
+        const bcrypt = require('bcryptjs'); // Need bcryptjs here
+        const dbInstance = require('./config/database').db; // Get the raw db instance
+
+        const ADMIN_USERNAME = 'admin';
+        const ADMIN_PASSWORD = 'admin123';
+
+        console.log(`[ADMIN_CREATE_SCRIPT] Checking for admin '${ADMIN_USERNAME}'...`);
+        dbInstance.get("SELECT * FROM admins WHERE username = ?", [ADMIN_USERNAME], async (err, row) => {
+            if (err) {
+                return console.error("[ADMIN_CREATE_SCRIPT] DB error checking admin:", err.message);
+            }
+            if (row) {
+                return console.log(`[ADMIN_CREATE_SCRIPT] Admin '${ADMIN_USERNAME}' already exists.`);
+            }
+            
+            // If admin does not exist, create it
+            console.log(`[ADMIN_CREATE_SCRIPT] Admin not found. Creating '${ADMIN_USERNAME}'...`);
+            try {
+                const hashedPassword = await bcrypt.hash(ADMIN_PASSWORD, 10);
+                dbInstance.run("INSERT INTO admins (username, password, isDefault) VALUES (?, ?, ?)", 
+                    [ADMIN_USERNAME, hashedPassword, true], function(insertErr) {
+                    if (insertErr) {
+                        console.error("[ADMIN_CREATE_SCRIPT] Error inserting new admin:", insertErr.message);
+                    } else {
+                        console.log(`[ADMIN_CREATE_SCRIPT] ✅ Successfully created admin '${ADMIN_USERNAME}' with ID: ${this.lastID}`);
+                    }
+                });
+            } catch (hashError) {
+                console.error("[ADMIN_CREATE_SCRIPT] Error hashing password:", hashError);
+            }
+        });
+        // --- END OF TEMPORARY ADMIN CREATION LOGIC ---
+
+        // Your original admin creation logic can be commented out for now
+        // const { createDefaultAdmin } = require('./models/adminModel');
+        // createDefaultAdmin().then(msg => console.log(msg)).catch(err => console.error(err));
+
+        console.log("SERVER_LOG: [15] App is fully ready and healthy.");
+
+    }).catch(err => {
+        console.error('SERVER_LOG_FATAL: [14a] FAILED to initialize database tables!', err);
+    });
+});
+
+module.exports = app;
