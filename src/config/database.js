@@ -20,11 +20,18 @@ const pool = new Pool({
 
 console.log("DATABASE_LOG: PostgreSQL Pool configured.");
 
+// Helper to replace '?' with '$1', '$2', etc. for PostgreSQL
+const formatQuery = (sql) => {
+    let i = 0;
+    return sql.replace(/\?/g, () => `$${++i}`);
+};
+
 // Helper function to mimic the behavior of sqlite3's db.all, db.get, db.run
 const db = {
     all: async (sql, params, callback) => {
+        const formattedSql = formatQuery(sql);
         try {
-            const result = await pool.query(sql, params);
+            const result = await pool.query(formattedSql, params);
             callback(null, result.rows);
         } catch (err) {
             callback(err, null);
@@ -38,21 +45,20 @@ const db = {
             callback(err, null);
         }
     },
-    run: async (sql, params, callback) => {
+    get: async (sql, params, callback) => {
+        const formattedSql = formatQuery(sql);
+        const isReturning = /returning\s+id/i.test(formattedSql);
         try {
-            const result = await pool.query(sql, params);
-            // Mimic the 'this' context for 'lastID' and 'changes'
+            const result = await pool.query(formattedSql, params);
             const context = {
-                // NOTE: lastID is not standard in pg. Use 'RETURNING id' in SQL for this.
-                // For simplicity, we'll return null here. Your code that relies on this may need changes.
-                lastID: null, 
-                changes: result.rowCount, // rowCount is the equivalent of 'changes'
+                lastID: isReturning && result.rows[0] ? result.rows[0].id : null,
+                changes: result.rowCount,
             };
             callback.call(context, null);
-        } catch (err) {
+            } catch (err) {
             callback.call({ lastID: null, changes: 0 }, err);
-        }
-    },
+            }
+        },
     // We will now handle transactions differently, so serialize is not needed in the same way.
     // However, your controllers might need to be updated to handle transactions with pg.
     // For now, let's assume individual queries. We will fix transactions if they break.

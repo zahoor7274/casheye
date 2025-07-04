@@ -245,7 +245,7 @@ exports.requestWithdrawal = async (req, res) => {
     // Optional: Add withdrawal limits, fees, etc. later
 
     const sql = `INSERT INTO transactions (userId, type, amount, status, method, accountNumber, description)
-                 VALUES (?, 'Withdrawal', ?, 'Pending', ?, ?, ?)`;
+                VALUES ($1, 'Deposit', $2, 'Pending', $3, $4, $5, $6) RETURNING id`;
     const description = `User withdrawal request to ${accountNumber.trim()} via ${method}.`;
 
     db.run(sql, [userId, withdrawalAmount, method, accountNumber.trim(), description], function(err) {

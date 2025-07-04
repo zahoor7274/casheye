@@ -43,7 +43,7 @@ exports.signup = async (req, res) => {
             const newUserReferralCode = generateReferralCode();
 
             const sql = `INSERT INTO users (name, email, password, referralCode, referredBy, status)
-                         VALUES (?, ?, ?, ?, ?, ?)`;
+                         VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
             db.run(sql, [name, email, hashedPassword, newUserReferralCode, referredByUserId, 'Active'], function(err) {
                 if (err) {
                     console.error("Signup DB error (insert user):", err.message);

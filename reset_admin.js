@@ -1,43 +1,60 @@
 // reset_admin.js
-const { db } = require('./src/config/database'); // Import our new db wrapper
+const { Pool } = require('pg'); // We will use 'pg' directly
 const bcrypt = require('bcryptjs');
 
-const RESET_USERNAME = 'KaSo@gmail.com';
-const RESET_PASSWORD = 'KaSo@7274143$';
+// --- PASTE THE PUBLIC CONNECTION URL FROM RAILWAY HERE ---
+// Get this from your PostgreSQL service -> "Variables" tab -> DATABASE_PUBLIC_URL
+const PUBLIC_DATABASE_URL = 'postgresql://postgres:cOcnOeSmNcTPsothZmQnCviKmagZxbJK@yamabiko.proxy.rlwy.net:23857/railway';
+// ---------------------------------------------------------
+
+// --- CREDENTIALS TO RESET TO ---
+const RESET_USERNAME = 'admin';
+const RESET_PASSWORD = 'admin123';
+// -----------------------------
+
+
+// --- SCRIPT LOGIC ---
+if (!PUBLIC_DATABASE_URL || !PUBLIC_DATABASE_URL.startsWith('postgres')) {
+    console.error("ERROR: Please paste the full public PostgreSQL connection URL from Railway into the PUBLIC_DATABASE_URL constant in this script.");
+    process.exit(1);
+}
+
+// Create a new Pool instance specifically for this script using the public URL
+const pool = new Pool({
+    connectionString: PUBLIC_DATABASE_URL,
+    ssl: { rejectUnauthorized: false } // SSL is required for external connections to Railway DBs
+});
 
 const resetAdminAccount = async () => {
+    let client;
     try {
-        console.log("Connecting to PostgreSQL...");
-        // db functions are now async and use callbacks, perfect for this script
-        
-        console.log("Step 1: Deleting all existing admin accounts...");
-        await new Promise((resolve, reject) => {
-            db.run("DELETE FROM admins", [], function(err) {
-                if (err) return reject(err);
-                console.log(`Successfully deleted ${this.changes} admin account(s).`);
-                resolve();
-            });
-        });
+        console.log("Connecting to PostgreSQL via PUBLIC URL...");
+        client = await pool.connect(); // Get a client from the pool
+        console.log("Successfully connected.");
+
+        console.log("\nStep 1: Deleting all existing admin accounts...");
+        const deleteResult = await client.query("DELETE FROM admins");
+        console.log(`Successfully deleted ${deleteResult.rowCount} admin account(s).`);
 
         console.log("\nStep 2: Creating new default admin account...");
-        const hashedPassword = await bcrypt.hash(RESET_PASSWORD, 10);
-        const sql = `INSERT INTO admins (username, password, isDefault) VALUES ($1, $2, $3)`;
-
-        await new Promise((resolve, reject) => {
-            db.run(sql, [RESET_USERNAME, hashedPassword, true], function(err) {
-                if (err) return reject(err);
-                console.log(`\n✅ SUCCESS: Admin account reset successfully.`);
-                resolve();
-            });
-        });
+        console.log(`   -> Username: ${RESET_USERNAME}`);
+        console.log(`   -> Password: ${RESET_PASSWORD}`);
         
-        console.log("NOTE: 'lastID' is not supported with this pg setup. Admin was created.");
+        const hashedPassword = await bcrypt.hash(RESET_PASSWORD, 10);
+        const sql = `INSERT INTO admins (username, password, isDefault) VALUES ($1, $2, $3) RETURNING id`;
+        const insertResult = await client.query(sql, [RESET_USERNAME, hashedPassword, true]);
+        
+        console.log(`\n✅ SUCCESS: Admin account reset successfully.`);
+        console.log(`   New admin created with ID: ${insertResult.rows[0].id}`);
 
     } catch (error) {
         console.error('\n❌ An unexpected error occurred:', error);
     } finally {
-        console.log("\nProcess finished. The connection pool will handle closing.");
-        // With a connection pool, you don't manually close it in a short-lived script.
+        if (client) {
+            client.release(); // Release the client back to the pool
+        }
+        await pool.end(); // Close all connections in the pool
+        console.log("\nDatabase connection pool closed. Process finished.");
     }
 };
 

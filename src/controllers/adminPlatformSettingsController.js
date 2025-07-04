@@ -106,7 +106,7 @@ exports.createInvestmentPlan = (req, res) => {
     }
 
     const sql = `INSERT INTO investment_plans (name, investmentAmount, dailyReturn, durationDays, description, isActive)
-                 VALUES (?, ?, ?, ?, ?, ?)`;
+                 VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
     db.run(sql, [
         name,
         parseFloat(investmentAmount),
