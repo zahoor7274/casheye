@@ -1,7 +1,7 @@
-const { db } = require('../config/database');
+const { query, pool } = require('../config/database');
 const bcrypt = require('bcryptjs');
 
-exports.getUserProfile = (req, res) => {
+/*exports.getUserProfile = (req, res) => {
     if (!req.user) {
         return res.status(404).json({ message: "User profile not found in request." });
     }
@@ -83,13 +83,6 @@ exports.getCheckInStatus = async (req, res) => {
         res.status(500).json({ message: "Server error while checking status." });
     }
 };
-
-// src/controllers/userController.js
-
-// src/controllers/userController.js
-
-// src/controllers/userController.js
-
 exports.performCheckIn = async (req, res) => {
     const userId = req.user.id;
     const user = req.user;
@@ -286,4 +279,161 @@ exports.getReferrals = (req, res) => {
             data: referredUsers
             });
         });
+};*/
+// src/controllers/userController.js
+const { query, pool } = require('../config/database');
+const bcrypt = require('bcryptjs');
+
+// --- Get User Profile ---
+exports.getUserProfile = (req, res) => {
+    if (!req.user) {
+        return res.status(404).json({ message: "User profile not found in request." });
+    }
+    res.json({
+        message: "User profile fetched successfully.",
+        data: req.user
+    });
+};
+
+// --- Get Daily Check-in Status ---
+exports.getCheckInStatus = async (req, res) => {
+    try {
+        const user = req.user;
+
+        if (!user.activeplanid) { // Note: pg returns lowercase column names
+            return res.json({ message: "You need an active investment plan to perform daily check-ins.", canCheckIn: false, hasActivePlan: false });
+        }
+
+        const { rows } = await query("SELECT dailyreturn FROM investment_plans WHERE id = $1", [user.activeplanid]);
+        const plan = rows[0];
+
+        if (!plan) {
+            return res.status(404).json({ message: "Active investment plan details not found.", canCheckIn: false, hasActivePlan: true });
+        }
+
+        const dailyProfit = plan.dailyreturn;
+        let canCheckIn = false;
+        let nextCheckInAt = null;
+        let message = "";
+
+        const lastCheckInTime = user.lastcheckin ? new Date(user.lastcheckin) : null;
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        if (!lastCheckInTime || lastCheckInTime < startOfToday) {
+            canCheckIn = true;
+            message = "You are eligible for your daily check-in.";
+        } else {
+            const startOfTomorrow = new Date(startOfToday);
+            startOfTomorrow.setDate(startOfTomorrow.getDate() + 1);
+            nextCheckInAt = startOfTomorrow.toISOString();
+            message = "You have already claimed your earnings for today.";
+        }
+        
+        res.json({ message, canCheckIn, nextCheckInAt, dailyProfit: canCheckIn ? dailyProfit : null, lastCheckIn: user.lastcheckin, hasActivePlan: true });
+
+    } catch (error) {
+        console.error("GET_CHECK_IN_STATUS_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Server error while checking status." });
+    }
+};
+
+
+// --- Perform Daily Check-in ---
+exports.performCheckIn = async (req, res) => {
+    const client = await pool.connect(); // Get a client for transaction
+    try {
+        const user = req.user;
+        const userId = user.id;
+
+        if (!user.activeplanid) {
+            return res.status(400).json({ message: "You need an active investment plan to perform daily check-ins." });
+        }
+
+        const planResult = await query("SELECT dailyreturn FROM investment_plans WHERE id = $1", [user.activeplanid]);
+        const plan = planResult.rows[0];
+
+        if (!plan) {
+            return res.status(404).json({ message: "Active investment plan details not found." });
+        }
+        
+        const lastCheckInTime = user.lastcheckin ? new Date(user.lastcheckin) : null;
+        const now = new Date();
+        const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+        if (lastCheckInTime && lastCheckInTime >= startOfToday) {
+            return res.status(400).json({ message: "You have already claimed your earnings for today." });
+        }
+
+        const dailyProfit = plan.dailyreturn;
+        const newBalance = user.balance + dailyProfit;
+        const currentTimeForDb = new Date();
+
+        await client.query('BEGIN');
+
+        await client.query("UPDATE users SET balance = $1, lastCheckIn = $2 WHERE id = $3", [newBalance, currentTimeForDb, userId]);
+        
+        const transSql = `INSERT INTO transactions (userId, type, amount, status, description, method) VALUES ($1, 'Daily Earnings', $2, 'Completed', $3, 'Platform')`;
+        await client.query(transSql, [userId, dailyProfit, 'Daily earnings from active plan']);
+        
+        await client.query('COMMIT');
+        
+        res.json({ message: `Successfully claimed ${dailyProfit.toFixed(2)} PKR. Your new balance is ${newBalance.toFixed(2)} PKR.`, newBalance, dailyProfitEarned: dailyProfit });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error("PERFORM_CHECK_IN_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Server error during check-in." });
+    } finally {
+        client.release();
+    }
+};
+
+
+// --- Change User Password ---
+exports.changePassword = async (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { currentPassword, newPassword } = req.body;
+
+        const { rows } = await query("SELECT password FROM users WHERE id = $1", [userId]);
+        const userWithPassword = rows[0];
+
+        if (!userWithPassword) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        const isMatch = await bcrypt.compare(currentPassword, userWithPassword.password);
+        if (!isMatch) {
+            return res.status(401).json({ message: "Incorrect current password." });
+        }
+        
+        const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+        
+        await query("UPDATE users SET password = $1, updatedAt = CURRENT_TIMESTAMP WHERE id = $2", [hashedNewPassword, userId]);
+        
+        res.json({ message: "Password changed successfully." });
+
+    } catch (error) {
+        console.error("CHANGE_PASSWORD_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Server error while changing password." });
+    }
+};
+
+// --- Get User Referrals ---
+exports.getReferrals = async (req, res) => {
+    try {
+        const referrerUserId = req.user.id;
+        const sql = `
+            SELECT id, name, email, createdAt AS signupDate, hasMadeFirstInvestment
+            FROM users WHERE referredBy = $1 ORDER BY createdAt DESC
+        `;
+        const { rows } = await query(sql, [referrerUserId]);
+
+        res.json({ message: "Your referred users fetched successfully.", data: rows });
+
+    } catch (error) {
+        console.error("GET_REFERRALS_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Could not retrieve your referrals." });
+    }
 };

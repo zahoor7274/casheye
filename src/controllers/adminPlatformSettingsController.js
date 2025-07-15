@@ -1,8 +1,8 @@
 // src/controllers/adminPlatformSettingsController.js
-const { db } = require('../config/database');
+const { query } = require('../config/database');
 
 // Get current deposit account settings
-exports.getDepositAccountSettings = (req, res) => {
+/*exports.getDepositAccountSettings = (req, res) => {
     db.get("SELECT value FROM platform_settings WHERE key = ?", ['deposit_accounts'], (err, row) => {
         if (err) {
             console.error("Error fetching deposit account settings:", err.message);
@@ -178,7 +178,7 @@ exports.updateInvestmentPlan = (req, res) => {
 
     fieldsToUpdate.push("updatedAt = CURRENT_TIMESTAMP"); // Always update timestamp if other fields are updated
 
-    const sql = `UPDATE investment_plans SET ${fieldsToUpdate.join(", ")} WHERE id = ?`;
+    const sql = `UPDATE investment_plans SET ${fieldsToUpdate.join(", ")} WHERE id = $1`;
     values.push(numericPlanId);
 
     db.run(sql, values, function(err) {
@@ -194,4 +194,113 @@ exports.updateInvestmentPlan = (req, res) => {
         }
         res.json({ message: `Investment plan ${numericPlanId} updated successfully.` });
     });
+};
+*/
+// Get deposit account settings
+exports.getDepositAccountSettings = async (req, res) => {
+    try {
+        const { rows } = await query("SELECT value FROM platform_settings WHERE key = $1", ['deposit_accounts']);
+        if (rows[0] && rows[0].value) {
+            const settings = JSON.parse(rows[0].value);
+            res.json({ message: "Deposit account settings fetched successfully.", data: settings });
+        } else {
+            res.json({
+                message: "Deposit settings not found, returning default.",
+                data: {
+                    easypaisa: { name: "", number: "", instructions: "" },
+                    jazzcash: { name: "", number: "", instructions: "" },
+                    binance_trc20_usdt: { name: "USDT (TRC20)", address: "", instructions: "", network: "TRC20" }
+                }
+            });
+        }
+    } catch (error) {
+        console.error("ADMIN_GET_DEPOSIT_SETTINGS_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to retrieve deposit account settings." });
+    }
+};
+
+// Update deposit account settings
+exports.updateDepositAccountSettings = async (req, res) => {
+    try {
+        const settingsJson = JSON.stringify(req.body); // Assumes validation happened in middleware
+        const sql = "INSERT INTO platform_settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = $2";
+        await query(sql, ['deposit_accounts', settingsJson]);
+        res.json({ message: "Deposit account settings updated successfully.", data: req.body });
+    } catch (error) {
+        console.error("ADMIN_UPDATE_DEPOSIT_SETTINGS_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to save deposit account settings." });
+    }
+};
+
+// --- Investment Plan Management ---
+
+// List all investment plans for admin
+exports.getAdminInvestmentPlans = async (req, res) => {
+    try {
+        const sql = "SELECT id, name, investmentamount, dailyreturn, durationdays, description, isactive FROM investment_plans ORDER BY investmentamount ASC, id ASC";
+        const { rows } = await query(sql);
+        res.json({ message: "Investment plans fetched successfully.", data: rows });
+    } catch (error) {
+        console.error("ADMIN_LIST_PLANS_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Could not retrieve investment plans." });
+    }
+};
+
+// Create a new investment plan
+exports.createInvestmentPlan = async (req, res) => {
+    try {
+        const { name, investmentAmount, dailyReturn, durationDays, description, isActive = true } = req.body;
+        const sql = `INSERT INTO investment_plans (name, investmentAmount, dailyReturn, durationDays, description, isActive) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`;
+        const params = [name, investmentAmount, dailyReturn, durationDays, description, isActive];
+        const { rows } = await query(sql, params);
+        res.status(201).json({ message: "Investment plan created successfully.", data: { id: rows[0].id, ...req.body } });
+    } catch (error) {
+        console.error("ADMIN_CREATE_PLAN_ERROR:", error.message, error.stack);
+        if (error.code === '23505') { // PostgreSQL unique violation code
+            return res.status(409).json({ message: "An investment plan with this name already exists." });
+        }
+        res.status(500).json({ message: "Failed to create investment plan." });
+    }
+};
+
+// Update an existing investment plan
+exports.updateInvestmentPlan = async (req, res) => {
+    try {
+        const { planId } = req.params;
+        const fieldsToUpdate = [];
+        const values = [];
+        let paramIndex = 1;
+
+        for (const key in req.body) {
+            if (Object.hasOwnProperty.call(req.body, key)) {
+                // Convert camelCase from JS to snake_case for DB if necessary, or just use camelCase in DB
+                // Assuming your DB columns are now lowercase, e.g., investmentamount
+                const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+                fieldsToUpdate.push(`${dbKey.toLowerCase()} = $${paramIndex++}`);
+                values.push(req.body[key]);
+            }
+        }
+
+        if (fieldsToUpdate.length === 0) {
+            return res.status(400).json({ message: "No fields provided for update." });
+        }
+        
+        fieldsToUpdate.push(`updatedAt = CURRENT_TIMESTAMP`);
+
+        const sql = `UPDATE investment_plans SET ${fieldsToUpdate.join(", ")} WHERE id = $${paramIndex}`;
+        values.push(planId);
+
+        const result = await query(sql, values);
+
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Investment plan not found or no changes made." });
+        }
+        res.json({ message: `Investment plan ${planId} updated successfully.` });
+    } catch (error) {
+        console.error("ADMIN_UPDATE_PLAN_ERROR:", error.message, error.stack);
+        if (error.code === '23505') {
+            return res.status(409).json({ message: "Update failed, plan name may already be in use." });
+        }
+        res.status(500).json({ message: "Failed to update investment plan." });
+    }
 };

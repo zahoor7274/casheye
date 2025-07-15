@@ -6,15 +6,13 @@ const cors = require('cors');
 const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const db = require('./config/database');
 
 const app = express();
 console.log("SERVER_LOG: [6] Express app initialized.");
 app.set('trust proxy', 1);
 console.log("SERVER_LOG: [6a] 'trust proxy' enabled.");
-const PORT = process.env.PORT || 3000;
-
-// --- Database Setup (SQLite) ---
-const db = require('./config/database'); // We'll create this next
+//const PORT = process.env.PORT || 3000;
 
 // --- Middleware ---
 app.use(helmet());
@@ -43,10 +41,6 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 // --- API Routes ---
-// We'll define these later and import them
-// e.g., const authRoutes = require('./routes/authRoutes');
-// app.use('/api/auth', authRoutes);
-
 const authUserRoutes = require('./routes/authUserRoutes');
 const platformRoutes = require('./routes/platformRoutes');
 const transactionUserRoutes = require('./routes/transactionUserRoutes');
@@ -80,11 +74,11 @@ app.use((err, req, res, next) => {
 });
 
 // --- Start Server ---
- app.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
+// app.listen(PORT, () => {
+//    console.log(`Server is running on http://localhost:${PORT}`);
     // Initialize database tables when server starts
-        db.initTables().then(() => {
-        console.log('Database tables initialized/checked.');
+//        db.initTables().then(() => {
+//        console.log('Database tables initialized/checked.');
 /*        if (process.env.INITIAL_ADMIN_CREATED !== 'true') { // Check the flag
             const { createDefaultAdmin } = require('./models/adminModel');
             // Make createDefaultAdmin use env vars for username/password or pass them
@@ -102,9 +96,29 @@ app.use((err, req, res, next) => {
         } else {
             console.log("Default admin creation skipped (INITIAL_ADMIN_CREATED is true).");
         }*/
-    }).catch(err => {
-        console.error('Failed to initialize database tables:', err);
-    });
+//    }).catch(err => {
+//        console.error('Failed to initialize database tables:', err);
+//    });
+//});
+
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`SERVER_LOG: [12] SUCCESS! Server is now listening on port ${PORT}.`);
+    db.initTables()
+        .then(() => {
+            console.log('SERVER_LOG: [14] Database tables initialization successful.');
+            // This is how you call an async function from a .then() block
+            const { createDefaultAdmin } = require('./models/adminModel');
+            createDefaultAdmin()
+                .then(msg => console.log(msg))
+                .catch(err => console.error("Error during default admin creation:", err));
+            console.log("SERVER_LOG: [15] App is fully ready and healthy.");
+        })
+        .catch(err => {
+            console.error('SERVER_LOG_FATAL: [14a] FAILED to initialize database tables!', err);
+            process.exit(1); // Exit if DB init fails
+        });
 });
 
 module.exports = app;
