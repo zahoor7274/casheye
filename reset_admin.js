@@ -8,8 +8,8 @@ const PUBLIC_DATABASE_URL = 'postgresql://postgres:cOcnOeSmNcTPsothZmQnCviKmagZx
 // ---------------------------------------------------------
 
 // --- CREDENTIALS TO RESET TO ---
-const RESET_USERNAME = 'admin';
-const RESET_PASSWORD = 'admin123';
+const RESET_USERNAME = 'Akash';
+const RESET_PASSWORD = 'Akash@7274143$';
 // -----------------------------
 
 

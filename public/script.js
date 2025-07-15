@@ -362,9 +362,9 @@ function renderInvestmentPlans(plans) {
             return p;
         }
 
-        cardDiv.appendChild(createDetailP('Invest', `${(plan.investmentAmount || 0).toFixed(2)} PKR`));
-        cardDiv.appendChild(createDetailP('Daily Return', `${(plan.dailyReturn || 0).toFixed(2)} PKR`));
-        cardDiv.appendChild(createDetailP('Duration', `${plan.durationDays || 0} Days`));
+        cardDiv.appendChild(createDetailP('Invest', `${(plan.investmentamount || 0).toFixed(2)} PKR`));
+        cardDiv.appendChild(createDetailP('Daily Return', `${(plan.dailydeturn || 0).toFixed(2)} PKR`));
+        cardDiv.appendChild(createDetailP('Duration', `${plan.durationdays || 0} Days`));
 
         if (plan.description) {
             const descP = document.createElement('p');
@@ -377,7 +377,7 @@ function renderInvestmentPlans(plans) {
         const investButton = document.createElement('button');
         investButton.type = 'button';
         investButton.className = 'invest-btn';
-        investButton.textContent = `Invest ${(plan.investmentAmount || 0).toFixed(2)} PKR`;
+        investButton.textContent = `Invest ${(plan.investmentamount || 0).toFixed(2)} PKR`;
         investButton.dataset.planId = plan.id || plan.name; // Use ID if available, fallback to name
         cardDiv.appendChild(investButton);
 

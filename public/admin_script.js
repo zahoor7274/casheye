@@ -617,9 +617,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${plan.name || 'N/A'}</td>
-                <td>${(plan.investmentAmount || 0).toFixed(2)}</td>
-                <td>${(plan.dailyReturn || 0).toFixed(2)}</td>
-                <td>${plan.durationDays || 0}</td>
+                <td>${(plan.investmentamount || 0).toFixed(2)}</td>
+                <td>${(plan.dailyreturn || 0).toFixed(2)}</td>
+                <td>${plan.durationdays || 0}</td>
                 <td class="wrap">${plan.description || '-'}</td>
             `;
             adminPlansTableBody.appendChild(tr);
@@ -650,15 +650,15 @@ document.addEventListener('DOMContentLoaded', () => {
             tr.innerHTML = `
                 <td>${plan.id}</td>
                 <td>${plan.name || 'N/A'}</td>
-                <td>${(plan.investmentAmount || 0).toFixed(2)}</td>
-                <td>${(plan.dailyReturn || 0).toFixed(2)}</td>
-                <td>${plan.durationDays || 0}</td>
+                <td>${(plan.investmentamount || 0).toFixed(2)}</td>
+                <td>${(plan.dailyreturn || 0).toFixed(2)}</td>
+                <td>${plan.durationdays || 0}</td>
                 <td class="wrap">${plan.description || '-'}</td>
-                <td><span class="status-${plan.isActive ? 'active' : 'inactive'}">${plan.isActive ? 'Active' : 'Inactive'}</span></td>
+                <td><span class="status-${plan.isactive ? 'active' : 'inactive'}">${plan.isactive ? 'Active' : 'Inactive'}</span></td>
                 <td>
                     <button type="button" class="action-btn btn-edit" data-plan-id="${plan.id}">Edit</button>
-                    <button type="button" class="action-btn ${plan.isActive ? 'btn-block' : 'btn-approve'}" data-plan-id="${plan.id}" data-plan-active="${plan.isActive}">
-                        ${plan.isActive ? 'Deactivate' : 'Activate'}
+                    <button type="button" class="action-btn ${plan.isactive ? 'btn-block' : 'btn-approve'}" data-plan-id="${plan.id}" data-plan-active="${plan.isActive}">
+                        ${plan.isactive ? 'Deactivate' : 'Activate'}
                     </button>
                 </td>
             `;
@@ -682,11 +682,11 @@ document.addEventListener('DOMContentLoaded', () => {
         planFormHeadingEl.textContent = `Edit Investment Plan (ID: ${plan.id})`;
         planIdInput.value = plan.id;
         planNameInput.value = plan.name || '';
-        planInvestmentAmountInput.value = (plan.investmentAmount || 0).toFixed(2); // Use toFixed to avoid long decimals in input
-        planDailyReturnInput.value = (plan.dailyReturn || 0).toFixed(2);
-        planDurationDaysInput.value = plan.durationDays || 0;
+        planInvestmentAmountInput.value = (plan.investmentamount || 0).toFixed(2); // Use toFixed to avoid long decimals in input
+        planDailyReturnInput.value = (plan.dailyreturn || 0).toFixed(2);
+        planDurationDaysInput.value = plan.durationdays || 0;
         planDescriptionTextarea.value = plan.description || '';
-        planIsActiveCheckbox.checked = !!plan.isActive; // Ensure boolean
+        planIsActiveCheckbox.checked = !!plan.isactive; // Ensure boolean
         savePlanBtnEl.textContent = 'Update Plan';
         if (managePlanForm) { // Scroll to form if it exists
              managePlanForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
