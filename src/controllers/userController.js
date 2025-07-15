@@ -280,9 +280,7 @@ exports.getReferrals = (req, res) => {
             });
         });
 };*/
-// src/controllers/userController.js
-const { query, pool } = require('../config/database');
-const bcrypt = require('bcryptjs');
+
 
 // --- Get User Profile ---
 exports.getUserProfile = (req, res) => {
