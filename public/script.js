@@ -363,7 +363,7 @@ function renderInvestmentPlans(plans) {
         }
 
         cardDiv.appendChild(createDetailP('Invest', `${(plan.investmentamount || 0).toFixed(2)} PKR`));
-        cardDiv.appendChild(createDetailP('Daily Return', `${(plan.dailydeturn || 0).toFixed(2)} PKR`));
+        cardDiv.appendChild(createDetailP('Daily Return', `${(plan.dailyreturn || 0).toFixed(2)} PKR`));
         cardDiv.appendChild(createDetailP('Duration', `${plan.durationdays || 0} Days`));
 
         if (plan.description) {
