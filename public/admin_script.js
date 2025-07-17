@@ -430,24 +430,32 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderPendingDepositsTable(deposits) {
+        
         pendingDepositsTableBody.innerHTML = '';
         if (deposits.length === 0) {
-            showNoDataMessage(pendingDepositsTableBody);
+            showNoDataMessage(pendingDepositsTableBody, "No pending deposits found.", 6); 
             return;
         }
+
         deposits.forEach(deposit => {
             const tr = document.createElement('tr');
             let detailsHtml = '';
+
             if (deposit.transactionidexternal) {
-                detailsHtml += deposit.transactionIdExternal;
+                detailsHtml += deposit.transactionidexternal;
             }
+
             if (deposit.screenshoturl) {
                 if (detailsHtml) detailsHtml += '<br>';
-                // IMPORTANT: Ensure API_BASE_URL for screenshotUrl does not include /admin part if uploads are served from root
-                const screenshotFullUrl = deposit.screenshotUrl.startsWith('http') ? deposit.screenshotUrl : `${API_BASE_URL.replace('/api/admin', '')}${deposit.screenshotUrl}`;
-                detailsHtml += `<a href="${screenshotFullUrl}" target="_blank" rel="noopener noreferrer">View Screenshot</a>`;
+                
+                const screenshotPath = deposit.screenshoturl; 
+
+                detailsHtml += `<a href="${screenshotPath}" target="_blank" rel="noopener noreferrer">View Screenshot</a>`;
             }
-            if (!detailsHtml) detailsHtml = '-';
+            
+            if (!detailsHtml) {
+                detailsHtml = '-';
+            }
 
             tr.innerHTML = `
                 <td>${deposit.useremail || 'N/A'}</td>
@@ -463,7 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
             pendingDepositsTableBody.appendChild(tr);
         });
     }
-
     async function handleDepositAction(transactionId, action) {
         const result = await apiRequest(`/transactions/deposits/${transactionId}/${action}`, 'POST');
         if (result.success) {
