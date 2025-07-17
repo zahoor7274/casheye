@@ -146,7 +146,7 @@ function updateDashboardDisplay() {
     if (!currentUserData) return;
     if(userNameEl) userNameEl.textContent = currentUserData.name || 'User';
     if(balanceEl) balanceEl.textContent = (currentUserData.balance || 0).toFixed(2);
-    if(referralCodeEl) referralCodeEl.textContent = currentUserData.referralCode || 'N/A';
+    if(referralCodeEl) referralCodeEl.textContent = currentUserData.referralcode || 'N/A';
 }
 
 // --- Navigation and Section Display ---
@@ -553,14 +553,20 @@ async function fetchAndDisplayReferrals() {
     }
 }
 
+// script.js
+
 function renderReferrals(referrals) {
     if (!referralListEl) return;
-    referralListEl.innerHTML = ''; // Clear previous
+    referralListEl.innerHTML = ''; // Clear previous content
 
     if (referrals.length === 0) {
-        if(noReferralsMessageEl) noReferralsMessageEl.classList.remove('hidden');
+        if(noReferralsMessageEl) {
+            noReferralsMessageEl.classList.remove('hidden');
+            noReferralsMessageEl.textContent = "You haven't referred anyone yet. Share your referral code!";
+        }
         return;
     }
+
     if(noReferralsMessageEl) noReferralsMessageEl.classList.add('hidden');
 
     referrals.forEach(ref => {
@@ -572,17 +578,42 @@ function renderReferrals(referrals) {
 
         const nameSpan = document.createElement('span');
         nameSpan.className = 'referral-name';
+        // Use lowercase 'name' property
         nameSpan.textContent = ref.name || 'N/A';
         detailsDiv.appendChild(nameSpan);
 
+        // Use lowercase 'email' property
         if (ref.email) {
             const emailSpan = document.createElement('span');
             emailSpan.className = 'referral-email';
             emailSpan.textContent = ` (${ref.email})`;
             detailsDiv.appendChild(emailSpan);
         }
-        // Add more details like signupDate if backend provides, using textContent
+
+        // Use lowercase 'signupdate' property
+        if (ref.signupdate) {
+            const dateSpan = document.createElement('span');
+            dateSpan.className = 'referral-date';
+            // Format the date for better readability
+            dateSpan.textContent = ` - Joined: ${new Date(ref.signupdate).toLocaleDateString()}`;
+            detailsDiv.appendChild(dateSpan);
+        }
+        
         itemDiv.appendChild(detailsDiv);
+
+        // Add a status indicator for whether they have invested
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'referral-status';
+        // Use lowercase 'hasmadefirstinvestment' property
+        if (ref.hasmadefirstinvestment) {
+            statusDiv.textContent = 'Active (Invested)';
+            statusDiv.classList.add('status-active');
+        } else {
+            statusDiv.textContent = 'Pending (Not Invested)';
+            statusDiv.classList.add('status-inactive');
+        }
+        itemDiv.appendChild(statusDiv);
+
         referralListEl.appendChild(itemDiv);
     });
 }
