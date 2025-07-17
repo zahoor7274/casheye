@@ -438,10 +438,10 @@ document.addEventListener('DOMContentLoaded', () => {
         deposits.forEach(deposit => {
             const tr = document.createElement('tr');
             let detailsHtml = '';
-            if (deposit.transactionIdExternal) {
+            if (deposit.transactionidexternal) {
                 detailsHtml += deposit.transactionIdExternal;
             }
-            if (deposit.screenshotUrl) {
+            if (deposit.screenshoturl) {
                 if (detailsHtml) detailsHtml += '<br>';
                 // IMPORTANT: Ensure API_BASE_URL for screenshotUrl does not include /admin part if uploads are served from root
                 const screenshotFullUrl = deposit.screenshotUrl.startsWith('http') ? deposit.screenshotUrl : `${API_BASE_URL.replace('/api/admin', '')}${deposit.screenshotUrl}`;
