@@ -430,34 +430,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderPendingDepositsTable(deposits) {
-        pendingDepositsTableBody.innerHTML = '';
+        pendingDepositsTableBody.innerHTML = ''; // Clear previous content
+
         if (deposits.length === 0) {
-            showNoDataMessage(pendingDepositsTableBody);
+            showNoDataMessage(pendingDepositsTableBody, "No pending deposits found.", 7); // 7 columns
             return;
         }
+
         deposits.forEach(deposit => {
             const tr = document.createElement('tr');
-            let detailsHtml = '';
-            if (deposit.transactionIdExternal) {
-                detailsHtml += deposit.transactionIdExternal;
-            }
-            if (deposit.screenshotUrl) {
-                if (detailsHtml) detailsHtml += '<br>';
-                // IMPORTANT: Ensure API_BASE_URL for screenshotUrl does not include /admin part if uploads are served from root
-                const screenshotFullUrl = deposit.screenshotUrl.startsWith('http') ? deposit.screenshotUrl : `${API_BASE_URL.replace('/api/admin', '')}${deposit.screenshotUrl}`;
-                detailsHtml += `<a href="${screenshotFullUrl}" target="_blank" rel="noopener noreferrer">View Screenshot</a>`;
-            }
-            if (!detailsHtml) detailsHtml = '-';
+
+            // IMPORTANT: Access properties using all lowercase names
+            const userEmail = deposit.useremail || 'N/A';
+            const transactionId = deposit.transactionidexternal || 'N/A';
+            const submittedAt = deposit.submittedat ? new Date(deposit.submittedat).toLocaleString() : 'N/A';
+            const screenshotUrl = deposit.screenshoturl || '#';
+
+            // Use a full URL for the screenshot link if your API_BASE_URL is set up for it, or a relative path
+            // For Railway deployment, a relative path should work since frontend and backend are on same domain.
+            const fullScreenshotUrl = screenshotUrl.startsWith('http') ? screenshotUrl : `${window.location.origin}${screenshotUrl}`;
 
             tr.innerHTML = `
-                <td>${deposit.userEmail || 'N/A'}</td>
+                <td>${deposit.id}</td>
+                <td>${deposit.userid}</td>
+                <td>${userEmail}</td>
                 <td>${(deposit.amount || 0).toFixed(2)}</td>
                 <td>${deposit.method || 'N/A'}</td>
-                <td class="wrap">${detailsHtml}</td>
-                <td>${formatDate(deposit.submittedAt)}</td>
+                <td>${transactionId}</td>
                 <td>
-                    <button type="button" class="action-btn btn-approve" data-id="${deposit.id}" data-action="approve">Approve</button>
-                    <button type="button" class="action-btn btn-reject" data-id="${deposit.id}" data-action="reject">Reject</button>
+                    <a href="${fullScreenshotUrl}" target="_blank" class="action-btn-link">
+                        ${screenshotUrl !== '#' ? 'View' : 'No Image'}
+                    </a>
+                </td>
+                <td>${submittedAt}</td>
+                <td>
+                    <button type="button" class="action-btn btn-approve" data-tx-id="${deposit.id}" data-tx-type="deposit">Approve</button>
+                    <button type="button" class="action-btn btn-reject" data-tx-id="${deposit.id}" data-tx-type="deposit">Reject</button>
                 </td>
             `;
             pendingDepositsTableBody.appendChild(tr);
