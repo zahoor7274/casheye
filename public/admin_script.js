@@ -453,7 +453,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td>${deposit.useremail || 'N/A'}</td>
                 <td>${(deposit.amount || 0).toFixed(2)}</td>
                 <td>${deposit.method || 'N/A'}</td>
-                <td class="wrap">${detailshtml}</td>
+                <td class="wrap">${detailsHtml}</td>
                 <td>${formatDate(deposit.submittedat)}</td>
                 <td>
                     <button type="button" class="action-btn btn-approve" data-id="${deposit.id}" data-action="approve">Approve</button>
