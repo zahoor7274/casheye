@@ -267,38 +267,61 @@ exports.createInvestmentPlan = async (req, res) => {
 exports.updateInvestmentPlan = async (req, res) => {
     try {
         const { planId } = req.params;
-        const fieldsToUpdate = [];
-        const values = [];
-        let paramIndex = 1;
+        const { query } = require('../config/database'); // Make sure query is available
 
-        for (const key in req.body) {
-            if (Object.hasOwnProperty.call(req.body, key)) {
-                // Convert camelCase from JS to snake_case for DB if necessary, or just use camelCase in DB
-                // Assuming your DB columns are now lowercase, e.g., investmentamount
-                const dbKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-                fieldsToUpdate.push(`${dbKey.toLowerCase()} = $${paramIndex++}`);
-                values.push(req.body[key]);
-            }
+        // Fetch the current plan details from the database first
+        const currentPlanResult = await query("SELECT * FROM investment_plans WHERE id = $1", [planId]);
+        if (currentPlanResult.rowCount === 0) {
+            return res.status(404).json({ message: "Investment plan not found." });
         }
+        const currentPlan = currentPlanResult.rows[0]; // This object will have all lowercase keys
 
-        if (fieldsToUpdate.length === 0) {
-            return res.status(400).json({ message: "No fields provided for update." });
-        }
+        // Create an object with the updated data, using current data as a fallback.
+        // req.body keys are camelCase, currentPlan keys are lowercase.
+        const updatedPlanData = {
+            name: req.body.name !== undefined ? req.body.name : currentPlan.name,
+            investmentAmount: req.body.investmentAmount !== undefined ? req.body.investmentAmount : currentPlan.investmentamount,
+            dailyReturn: req.body.dailyReturn !== undefined ? req.body.dailyReturn : currentPlan.dailyreturn,
+            durationDays: req.body.durationDays !== undefined ? req.body.durationDays : currentPlan.durationdays,
+            description: req.body.description !== undefined ? req.body.description : currentPlan.description,
+            isActive: req.body.isActive !== undefined ? req.body.isActive : currentPlan.isactive
+        };
+
+        // THE SQL COLUMN NAMES MUST BE ALL LOWERCASE (OR EXACTLY AS THEY ARE IN THE DB)
+        const sql = `
+            UPDATE investment_plans 
+            SET 
+                name = $1, 
+                investmentAmount = $2, 
+                dailyReturn = $3, 
+                durationDays = $4, 
+                description = $5, 
+                isActive = $6, 
+                updatedAt = CURRENT_TIMESTAMP 
+            WHERE id = $7
+        `;
+
+        const params = [
+            updatedPlanData.name,
+            updatedPlanData.investmentAmount,
+            updatedPlanData.dailyReturn,
+            updatedPlanData.durationDays,
+            updatedPlanData.description,
+            updatedPlanData.isActive,
+            planId
+        ];
         
-        fieldsToUpdate.push(`updatedAt = CURRENT_TIMESTAMP`);
-
-        const sql = `UPDATE investment_plans SET ${fieldsToUpdate.join(", ")} WHERE id = $${paramIndex}`;
-        values.push(planId);
-
-        const result = await query(sql, values);
+        const result = await query(sql, params);
 
         if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Investment plan not found or no changes made." });
+            return res.status(404).json({ message: "Investment plan not found during update, or no changes made." });
         }
+
         res.json({ message: `Investment plan ${planId} updated successfully.` });
+
     } catch (error) {
         console.error("ADMIN_UPDATE_PLAN_ERROR:", error.message, error.stack);
-        if (error.code === '23505') {
+        if (error.code === '23505') { // PostgreSQL unique violation code
             return res.status(409).json({ message: "Update failed, plan name may already be in use." });
         }
         res.status(500).json({ message: "Failed to update investment plan." });
