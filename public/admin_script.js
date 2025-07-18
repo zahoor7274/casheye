@@ -448,9 +448,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (deposit.screenshoturl) {
                 if (detailsHtml) detailsHtml += '<br>';
                 
-                const screenshotPath = deposit.screenshoturl; 
+                const screenshotpath = deposit.screenshoturl; 
 
-                detailsHtml += `<a href="${screenshotPath}" target="_blank" rel="noopener noreferrer">View Screenshot</a>`;
+                detailsHtml += `<a href="${screenshotpath}" target="_blank" rel="noopener noreferrer">View Screenshot</a>`;
             }
             
             if (!detailsHtml) {
