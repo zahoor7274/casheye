@@ -19,11 +19,13 @@ app.use(helmet());
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Serve uploaded files statically (for screenshots)
 // Ensure the 'uploads' directory exists inside 'public'
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
+
+
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 
 // --- Basic Route ---
@@ -72,34 +74,6 @@ app.use((err, req, res, next) => {
     console.error(err.stack);
     res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
-
-// --- Start Server ---
-// app.listen(PORT, () => {
-//    console.log(`Server is running on http://localhost:${PORT}`);
-    // Initialize database tables when server starts
-//        db.initTables().then(() => {
-//        console.log('Database tables initialized/checked.');
-/*        if (process.env.INITIAL_ADMIN_CREATED !== 'true') { // Check the flag
-            const { createDefaultAdmin } = require('./models/adminModel');
-            // Make createDefaultAdmin use env vars for username/password or pass them
-            const defaultAdminUser = process.env.DEFAULT_ADMIN_USERNAME || 'professor';
-            const defaultAdminPass = process.env.DEFAULT_ADMIN_PASSWORD || 'password123';
-
-            createDefaultAdmin(defaultAdminUser, defaultAdminPass) // Or modify createDefaultAdmin to use env
-                .then(msg => {
-                    console.log(msg);
-                    if (msg.includes('created')) {
-                        console.log("IMPORTANT: Set INITIAL_ADMIN_CREATED=true in your .env file to prevent re-creation.");
-                    }
-                })
-                .catch(err => console.error("Error creating default admin:", err));
-        } else {
-            console.log("Default admin creation skipped (INITIAL_ADMIN_CREATED is true).");
-        }*/
-//    }).catch(err => {
-//        console.error('Failed to initialize database tables:', err);
-//    });
-//});
 
 const PORT = process.env.PORT || 3000;
 
