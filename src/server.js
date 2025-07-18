@@ -45,7 +45,7 @@ if (fs.existsSync(uploadsDirPath)) {
 // app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
 app.use('/uploads', express.static(uploadsDirPath))
-app.use(express.static(publicDirPath));
+// app.use(express.static(publicDirPath));
 
 // --- Basic Route ---
 //app.get('/', (req, res) => {
