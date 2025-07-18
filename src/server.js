@@ -44,7 +44,33 @@ if (fs.existsSync(uploadsDirPath)) {
 // Ensure the 'uploads' directory exists inside 'public'
 // app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
-app.use('/uploads', express.static(uploadsDirPath))
+app.get('/uploads/:filename', (req, res) => {
+    const { filename } = req.params;
+
+    // Security: Prevent directory traversal (e.g., ../../secrets.txt)
+    if (filename.includes('..')) {
+        return res.status(400).send('Invalid filename.');
+    }
+
+    // Use the absolute path we already calculated at startup
+    const filePath = path.join(uploadsDirPath, filename);
+
+    // Send the file. The callback will handle errors like the file not existing.
+    res.sendFile(filePath, (err) => {
+        if (err) {
+            console.error(`Error sending file ${filename}:`, err);
+            // The 'ENOENT' error code means "Error, No Entry" (file not found)
+            if (err.code === "ENOENT") {
+                res.status(404).send('File not found.');
+            } else {
+                // For other errors (e.g., permission issues), send a generic server error
+                res.status(500).send('Error serving file.');
+            }
+        }
+    });
+});
+
+// 2. GENERAL STATIC FILES FOR FRONTEND (index.html, css, js)
 app.use(express.static(publicDirPath));
 
 // --- Basic Route ---
