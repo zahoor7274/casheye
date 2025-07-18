@@ -88,10 +88,10 @@ app.use('/api/admin/platform', adminPlatformSettingsRoutes);
 // app.use('/api/admin/manage', adminManageAdminsRoutes);
 
 // --- CATCH-ALL ROUTE for Single Page App behavior ---
-// app.get('*', (req, res) => {
+app.get('*', (req, res) => {
     // This sends index.html for any GET request that wasn't an API call or a found static file.
-//    res.sendFile(path.join(publicDirPath, 'index.html'));
-//});
+    res.sendFile(path.join(publicDirPath, 'index.html'));
+});
 
 // --- Global Error Handler (Basic) ---
 app.use((err, req, res, next) => {
