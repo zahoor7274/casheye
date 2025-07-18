@@ -313,7 +313,11 @@ const fileFilter = (req, file, cb) => {
         cb(new Error('Invalid file type. Only JPG, PNG, GIF allowed.'), false);
     }
 };
-exports.uploadScreenshot = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter }).single('screenshot');
+exports.uploadScreenshot = multer({
+    storage: storage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: fileFilter
+}).single('screenshot');
 
 
 // --- User Invests in a Plan ---
