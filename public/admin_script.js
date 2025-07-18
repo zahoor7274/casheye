@@ -338,11 +338,11 @@ document.addEventListener('DOMContentLoaded', () => {
         profileUserEmailEl.textContent = userData.email || 'N/A';
         profileUserStatusEl.textContent = userData.status || 'N/A';
         profileUserBalanceEl.textContent = (userData.balance || 0).toFixed(2);
-        profileUserReferralCodeEl.textContent = userData.referralCode || 'N/A';
-        profileUserReferredByEl.textContent = userData.referredByEmail || 'N/A'; // Ensure backend sends this
-        profileUserHasInvestedEl.textContent = userData.hasMadeFirstInvestment ? 'Yes' : 'No';
-        profileUserActivePlanEl.textContent = userData.activePlanName || 'N/A'; // Ensure backend sends this
-        profileUserLastCheckInEl.textContent = formatDate(userData.lastCheckIn);
+        profileUserReferralCodeEl.textContent = userData.referralcode || 'N/A';
+        profileUserReferredByEl.textContent = userData.referredbyemail || 'N/A'; // Ensure backend sends this
+        profileUserHasInvestedEl.textContent = userData.hasmadefirstinvestment ? 'Yes' : 'No';
+        profileUserActivePlanEl.textContent = userData.activeplanname || 'N/A'; // Ensure backend sends this
+        profileUserLastCheckInEl.textContent = formatDate(userData.lastcheckin);
 
         profileReferralsByNameEl.textContent = userData.name || 'this user';
         profileTransactionsForNameEl.textContent = userData.name || 'User';
