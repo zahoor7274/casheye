@@ -7,11 +7,10 @@ const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./config/database');
+const fs = require('fs')
 
 const app = express();
-console.log("SERVER_LOG: [6] Express app initialized.");
 app.set('trust proxy', 1);
-console.log("SERVER_LOG: [6a] 'trust proxy' enabled.");
 //const PORT = process.env.PORT || 3000;
 
 // --- Middleware ---
@@ -19,17 +18,39 @@ app.use(helmet());
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
-app.use(express.static(path.join(__dirname, '..', 'public')));
+// app.use(express.static(path.join(__dirname, '..', 'public')));
 
+
+const projectRoot = path.resolve(__dirname, '..');
+const publicDirPath = path.join(projectRoot, 'public');
+const uploadsDirPath = path.join(publicDirPath, 'uploads');
+console.log(`[PATH DEBUG] Project Root: ${projectRoot}`);
+console.log(`[PATH DEBUG] Public Directory Path: ${publicDirPath}`);
+console.log(`[PATH DEBUG] Uploads Directory Path: ${uploadsDirPath}`);
+
+
+// Check if directories exist on startup
+if (fs.existsSync(publicDirPath)) {
+    console.log('[PATH DEBUG] Public directory confirmed to exist.');
+} else {
+    console.error('[PATH DEBUG] FATAL: Public directory NOT FOUND.');
+}
+if (fs.existsSync(uploadsDirPath)) {
+    console.log('[PATH DEBUG] Uploads directory confirmed to exist.');
+} else {
+    console.error('[PATH DEBUG] WARNING: Uploads directory NOT FOUND. It will be created on first upload.');
+}
 // Serve uploaded files statically (for screenshots)
 // Ensure the 'uploads' directory exists inside 'public'
-app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
+// app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
+app.use('/uploads', express.static(uploadsDirPath))
+app.use(express.static(publicDirPath));
 
 // --- Basic Route ---
-app.get('/', (req, res) => {
-    res.send('CashEye API is running!');
-});
+//app.get('/', (req, res) => {
+//    res.send('CashEye API is running!');
+//});
 
 
 const apiLimiter = rateLimit({
@@ -66,6 +87,11 @@ app.use('/api/admin/transactions', adminTransactionRoutes);
 app.use('/api/admin/platform', adminPlatformSettingsRoutes);
 // app.use('/api/admin/manage', adminManageAdminsRoutes);
 
+// --- CATCH-ALL ROUTE for Single Page App behavior ---
+app.get('*', (req, res) => {
+    // This sends index.html for any GET request that wasn't an API call or a found static file.
+    res.sendFile(path.join(publicDirPath, 'index.html'));
+});
 
 // --- Global Error Handler (Basic) ---
 app.use((err, req, res, next) => {
