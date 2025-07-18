@@ -1,5 +1,5 @@
 // src/server.js
-require('dotenv').config(); // Load environment variables from .env file
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
@@ -7,90 +7,93 @@ const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./config/database');
-
+const fs = require('fs'); // We need fs for a startup check
 
 const app = express();
-console.log("SERVER_LOG: [6] Express app initialized.");
 app.set('trust proxy', 1);
-console.log("SERVER_LOG: [6a] 'trust proxy' enabled.");
-//const PORT = process.env.PORT || 3000;
 
-// --- Middleware ---
+// --- Core Middleware ---
 app.use(helmet());
-app.use(cors()); // Enable CORS for all routes
-app.use(express.json()); // Parse JSON request bodies
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded files statically (for screenshots)
-// Ensure the 'uploads' directory exists inside 'public'
-app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
+// --- PATH DEFINITION AND DEBUGGING ---
+// Get the absolute path to the project root directory
+const projectRoot = path.resolve(__dirname, '..');
+// Define absolute paths for public and uploads directories
+const publicDirPath = path.join(projectRoot, 'public');
+const uploadsDirPath = path.join(publicDirPath, 'uploads');
+
+// Log these paths on startup to be 100% sure they are correct
+console.log(`[PATH DEBUG] Project Root: ${projectRoot}`);
+console.log(`[PATH DEBUG] Public Directory Path: ${publicDirPath}`);
+console.log(`[PATH DEBUG] Uploads Directory Path: ${uploadsDirPath}`);
+
+// Check if directories exist on startup
+if (fs.existsSync(publicDirPath)) {
+    console.log('[PATH DEBUG] Public directory confirmed to exist.');
+} else {
+    console.error('[PATH DEBUG] FATAL: Public directory NOT FOUND.');
+}
+if (fs.existsSync(uploadsDirPath)) {
+    console.log('[PATH DEBUG] Uploads directory confirmed to exist.');
+} else {
+    console.error('[PATH DEBUG] WARNING: Uploads directory NOT FOUND. It will be created on first upload.');
+}
+// --- END PATH DEBUGGING ---
 
 
-// --- Basic Route ---
-app.get('/', (req, res) => {
-    res.send('CashEye API is running!');
-});
+// --- STATIC FILE SERVING (Correct Order) ---
+// 1. Handle specific static path for /uploads
+app.use('/uploads', express.static(uploadsDirPath));
+
+// 2. Handle general static files for the frontend (index.html, etc.)
+app.use(express.static(publicDirPath));
 
 
-const apiLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Allow 100 requests to any /api endpoint per 15 minutes per IP
-    message: { message: "Too many requests to our API from this IP, please try again after 15 minutes." },
-    standardHeaders: true,
-    legacyHeaders: false,
-});
+// --- API ROUTES ---
+const apiLimiter = rateLimit({ /* ... your config ... */ });
 app.use('/api', apiLimiter);
-// --- API Routes ---
+
+// (Import all your route files here)
 const authUserRoutes = require('./routes/authUserRoutes');
-const platformRoutes = require('./routes/platformRoutes');
-const transactionUserRoutes = require('./routes/transactionUserRoutes');
-const userProfileRoutes = require('./routes/userProfileRoutes');
-
-app.use('/api/auth', authUserRoutes);
-app.use('/api/platform', platformRoutes);
-app.use('/api/transactions', transactionUserRoutes);
-app.use('/api/users', userProfileRoutes);
-
-// Admin Routes
-const adminAuthRoutes = require('./routes/adminAuthRoutes');
-const adminDashboardRoutes = require('./routes/adminDashboardRoutes');
-const adminUserManagementRoutes = require('./routes/adminUserManagementRoutes');
-const adminTransactionRoutes = require('./routes/adminTransactionRoutes');
+// ... etc ...
 const adminPlatformSettingsRoutes = require('./routes/adminPlatformSettingsRoutes');
-// const adminManageAdminsRoutes = require('./routes/adminManageAdminsRoutes'); // For UI demo, real admin management needs careful thought
 
-app.use('/api/admin/auth', adminAuthRoutes);
-app.use('/api/admin/dashboard', adminDashboardRoutes);
-app.use('/api/admin/users', adminUserManagementRoutes);
-app.use('/api/admin/transactions', adminTransactionRoutes);
+// (Mount all your API routes here)
+app.use('/api/auth', authUserRoutes);
+// ... etc ...
 app.use('/api/admin/platform', adminPlatformSettingsRoutes);
-// app.use('/api/admin/manage', adminManageAdminsRoutes);
 
 
-// --- Global Error Handler (Basic) ---
-app.use((err, req, res, next) => {
-    console.error(err.stack);
-    res.status(500).json({ message: 'Something went wrong!', error: err.message });
+// --- CATCH-ALL ROUTE for Single Page App behavior ---
+app.get('*', (req, res) => {
+    // This sends index.html for any GET request that wasn't an API call or a found static file.
+    res.sendFile(path.join(publicDirPath, 'index.html'));
 });
 
-const PORT = process.env.PORT || 3000;
+// --- Global Error Handler ---
+app.use((err, req, res, next) => {
+    console.error("GLOBAL_ERROR_HANDLER:", err.stack);
+    res.status(500).json({ message: 'An unexpected server error occurred.' });
+});
 
+// --- Start Server ---
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-    console.log(`SERVER_LOG: [12] SUCCESS! Server is now listening on port ${PORT}.`);
+    console.log(`SERVER_LOG: Server is now listening on port ${PORT}.`);
     db.initTables()
         .then(() => {
-            console.log('SERVER_LOG: [14] Database tables initialization successful.');
-            // This is how you call an async function from a .then() block
+            console.log('SERVER_LOG: Database tables initialization check complete.');
             const { createDefaultAdmin } = require('./models/adminModel');
             createDefaultAdmin()
-                .then(msg => console.log(msg))
-                .catch(err => console.error("Error during default admin creation:", err));
-            console.log("SERVER_LOG: [15] App is fully ready and healthy.");
+                .then(msg => console.log(`SERVER_LOG: ${msg}`))
+                .catch(err => console.error("SERVER_LOG_ERROR: Error during default admin creation:", err));
         })
         .catch(err => {
-            console.error('SERVER_LOG_FATAL: [14a] FAILED to initialize database tables!', err);
-            process.exit(1); // Exit if DB init fails
+            console.error('SERVER_LOG_FATAL: FAILED to initialize database tables!', err);
+            process.exit(1);
         });
 });
 
