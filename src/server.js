@@ -19,10 +19,11 @@ app.use(helmet());
 app.use(cors()); // Enable CORS for all routes
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
-
+// Serve uploaded files statically (for screenshots)
+// Ensure the 'uploads' directory exists inside 'public'
 app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
-
 
 
 // --- Basic Route ---
