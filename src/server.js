@@ -103,9 +103,10 @@ console.log("[ROUTER_CHECK] All API routes mounted successfully.");
 // app.use('/api/admin/manage', adminManageAdminsRoutes);
 
 // --- CATCH-ALL ROUTE for Single Page App behavior ---
-app.get('*', (req, res) => {
-    // This sends index.html for any GET request that wasn't an API call or a found static file.
-    res.sendFile(path.join(publicDirPath, 'index.html'));
+app.get(/^(?!\/api).*/, (req, res) => {
+    // The regex /^(?!\/api).*/ means: "match any path that does NOT start with /api"
+    console.log(`[CATCH-ALL] Serving index.html for non-API route: ${req.path}`);
+    res.sendFile(path.resolve(__dirname, '..', 'public', 'index.html'));
 });
 
 // --- Global Error Handler (Basic) ---
