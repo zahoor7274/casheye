@@ -44,13 +44,13 @@ if (fs.existsSync(uploadsDirPath)) {
 // Ensure the 'uploads' directory exists inside 'public'
 // app.use('/uploads', express.static(path.join(__dirname, '..', 'public', 'uploads')));
 
-app.use('/uploads', express.static(uploadsDirPath))
-// app.use(express.static(publicDirPath));
+app.use(express.static(publicDirPath));
+// app.use('/uploads', express.static(uploadsDirPath))
 
 // --- Basic Route ---
-//app.get('/', (req, res) => {
-//    res.send('CashEye API is running!');
-//});
+app.get('/', (req, res) => {
+    res.send('CashEye API is running!');
+});
 
 
 const apiLimiter = rateLimit({
