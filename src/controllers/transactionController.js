@@ -41,12 +41,11 @@ const fileFilter = (req, file, cb) => {
 };
 
 // 3. Create the Multer instance and export it as middleware
-// This middleware will use the 'storage' and 'fileFilter' defined above.
 exports.uploadScreenshot = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
     fileFilter: fileFilter // Use the fileFilter function
-}).single('screenshot'); // 'screenshot' is the field name from the frontend form
+}).single('screenshot');
 
 
 // --- Controller Functions ---

@@ -1,182 +1,203 @@
-// src/controllers/transactionController.js
-
+// src/controllers/adminTransactionController.js
 const { query, pool } = require('../config/database');
-const multer = require('multer');
-const path = require('path');
 const fs = require('fs');
+const path = require('path');
 
-// --- Multer Setup for Deposit Screenshots ---
-
-// 1. Define the storage configuration for where to save files
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        // Use the UPLOADS_DIR environment variable for production, fallback to a local path for development.
-        const uploadPath = process.env.UPLOADS_DIR || path.join(__dirname, '..', '..', 'public', 'uploads');
-        
-        // Ensure the directory exists before saving.
-        if (!fs.existsSync(uploadPath)) {
-            try {
-                fs.mkdirSync(uploadPath, { recursive: true });
-            } catch (error) {
-                console.error(`[MULTER] FAILED to create directory: ${uploadPath}`, error);
-                return cb(error); // Pass error to Multer
-            }
-        }
-        cb(null, uploadPath);
-    },
-    filename: function (req, file, cb) {
-        // Create a unique and sanitized filename
-        const uniqueFilename = `${req.user.id}-${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-        cb(null, uniqueFilename);
-    }
-});
-
-// 2. Define the file filter function to accept only images
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/gif') {
-        cb(null, true); // Accept file
-    } else {
-        cb(new Error('Invalid file type. Only JPG, PNG, or GIF are allowed.'), false); // Reject file
+// List pending deposits
+exports.listPendingDeposits = async (req, res) => {
+    try {
+        const sql = `
+            SELECT t.id, t.userid, u.email as useremail, t.amount, t.method, t.transactionidexternal, t.screenshoturl, t.timestamp as submittedat
+            FROM transactions t
+            JOIN users u ON t.userid = u.id
+            WHERE t.type = 'Deposit' AND t.status = 'Pending'
+            ORDER BY t.timestamp ASC
+        `;
+        const { rows } = await query(sql);
+        res.json({ message: "Pending deposits fetched successfully.", data: rows });
+    } catch (error) {
+        console.error("ADMIN_LIST_DEPOSITS_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to retrieve pending deposits." });
     }
 };
 
-// 3. Create the Multer instance and export it as middleware
-// This middleware will use the 'storage' and 'fileFilter' defined above.
-exports.uploadScreenshot = multer({
-    storage: storage,
-    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: fileFilter // Use the fileFilter function
-}).single('screenshot'); // 'screenshot' is the field name from the frontend form
-
-
-// --- Controller Functions ---
-
-// User Invests in a Plan
-exports.investInPlan = async (req, res) => {
+// Approve a deposit request
+exports.approveDeposit = async (req, res) => {
     const client = await pool.connect();
     try {
-        const userId = req.user.id;
-        const originalUser = req.user;
-        const { planId } = req.body;
-        const numericPlanId = parseInt(planId);
-
-        const planResult = await client.query("SELECT * FROM investment_plans WHERE id = $1 AND isActive = TRUE", [numericPlanId]);
-        const plan = planResult.rows[0];
-
-        if (!plan) {
-            return res.status(404).json({ message: "Investment plan not found or is inactive." });
-        }
-
-        if (originalUser.balance < plan.investmentamount) {
-            return res.status(400).json({ message: `Insufficient balance. You need ${plan.investmentamount.toFixed(2)} PKR.` });
-        }
-        if (originalUser.activeplanid) {
-            return res.status(400).json({ message: "You already have an active investment plan." });
-        }
+        const { transactionId } = req.params;
+        const adminId = req.admin.id;
 
         await client.query('BEGIN');
-
-        const newBalance = originalUser.balance - plan.investmentamount;
-        const investmentTime = new Date();
-        await client.query("UPDATE users SET balance = $1, activePlanId = $2, hasMadeFirstInvestment = TRUE, lastCheckIn = $3 WHERE id = $4", [newBalance, plan.id, investmentTime, userId]);
         
-        await client.query("INSERT INTO transactions (userId, type, amount, status, description, method) VALUES ($1, 'Investment', $2, 'Completed', $3, 'Platform')", [userId, plan.investmentamount, `Invested in ${plan.name}`]);
+        const { rows } = await client.query("SELECT * FROM transactions WHERE id = $1 AND type = 'Deposit' AND status = 'Pending' FOR UPDATE", [transactionId]);
+        const transaction = rows[0];
 
-        if (!originalUser.hasmadefirstinvestment && originalUser.referredby) {
-            const REFERRAL_PERCENTAGE = 0.10;
-            const calculatedBonus = parseFloat((plan.investmentamount * REFERRAL_PERCENTAGE).toFixed(2));
-            const referrerId = originalUser.referredby;
-            await client.query("UPDATE users SET balance = balance + $1 WHERE id = $2", [calculatedBonus, referrerId]);
-            await client.query("INSERT INTO transactions (userId, type, amount, status, description, method) VALUES ($1, 'Referral Bonus', $2, 'Completed', $3, 'Platform')", [referrerId, calculatedBonus, `Referral bonus (10%) for ${originalUser.name} investing`]);
+        if (!transaction) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: "Pending deposit not found or already processed." });
         }
+
+        await client.query("UPDATE users SET balance = balance + $1 WHERE id = $2", [transaction.amount, transaction.userid]);
+        
+        const newDescription = `Deposit approved by Admin ID ${adminId}. Original TID: ${transaction.transactionidexternal || 'N/A'}.`;
+        await client.query("UPDATE transactions SET status = 'Approved', adminProcessedBy = $1, description = $2 WHERE id = $3", [adminId, newDescription, transactionId]);
         
         await client.query('COMMIT');
         
-        res.json({ message: `Successfully invested in ${plan.name}. Your new balance is ${newBalance.toFixed(2)} PKR.`, newBalance, activePlanName: plan.name });
+        res.json({ message: `Deposit ID ${transactionId} approved successfully.` });
 
     } catch (error) {
         await client.query('ROLLBACK');
-        console.error("INVEST_IN_PLAN_ERROR:", error.message, error.stack);
-        res.status(500).json({ message: "Server error during investment process." });
+        console.error("ADMIN_APPROVE_DEPOSIT_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to approve deposit." });
     } finally {
         client.release();
     }
 };
 
-// User Requests a Deposit
-exports.requestDeposit = async (req, res) => {
+// Reject a deposit request
+exports.rejectDeposit = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const { amount, method, transactionId: transactionIdExternal } = req.body;
+        const { transactionId } = req.params;
+        const adminId = req.admin.id;
 
-        if (!req.file) {
-            return res.status(400).json({ message: "Payment screenshot is required." });
+        const { rows } = await query("SELECT screenshoturl FROM transactions WHERE id = $1 AND type = 'Deposit' AND status = 'Pending'", [transactionId]);
+        const transaction = rows[0];
+
+        if (!transaction) {
+            return res.status(404).json({ message: "Pending deposit not found or already processed." });
+        }
+        
+        const newDescription = `Deposit rejected by Admin ID ${adminId}.`;
+        const result = await query("UPDATE transactions SET status = 'Rejected', adminProcessedBy = $1, description = $2 WHERE id = $3", [adminId, newDescription, transactionId]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Update failed, transaction may have been processed by another admin." });
         }
 
-        const depositAmount = parseFloat(amount);
-        const screenshotUrl = `/uploads/${req.file.filename}`;
-        const description = `User deposit request via ${method}. TID: ${transactionIdExternal}`;
-        
-        const sql = `INSERT INTO transactions (userId, type, amount, status, method, transactionIdExternal, screenshotUrl, description) VALUES ($1, 'Deposit', $2, 'Pending', $3, $4, $5, $6) RETURNING id`;
-        const { rows } = await query(sql, [userId, depositAmount, method, transactionIdExternal, screenshotUrl, description]);
+        if (transaction.screenshoturl) {
+            const uploadsBaseDir = process.env.UPLOADS_DIR || path.join(__dirname, '..', '..', 'public', 'uploads');
+            const filename = path.basename(transaction.screenshoturl);
+            const screenshotPath = path.join(uploadsBaseDir, filename);
 
-        res.status(201).json({ message: "Deposit request submitted successfully and is pending approval.", transactionId: rows[0].id, details: { amount, method, transactionIdExternal } });
-
-    } catch (error) {
-        console.error("REQUEST_DEPOSIT_ERROR:", error.message, error.stack);
-        if (req.file) {
-            fs.unlink(req.file.path, (err) => {
-                if (err) console.error("Error cleaning up orphaned upload file:", err);
+            fs.unlink(screenshotPath, (unlinkErr) => {
+                if (unlinkErr && unlinkErr.code !== 'ENOENT') {
+                    console.warn(`Failed to delete screenshot ${screenshotPath}:`, unlinkErr.message);
+                } else if (!unlinkErr) {
+                    console.log(`Screenshot ${screenshotPath} deleted for rejected deposit.`);
+                }
             });
         }
-        res.status(500).json({ message: "Could not submit deposit request." });
+        
+        res.json({ message: `Deposit ID ${transactionId} rejected successfully.` });
+    } catch (error) {
+        console.error("ADMIN_REJECT_DEPOSIT_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to reject deposit." });
     }
 };
 
-// User Requests a Withdrawal
-exports.requestWithdrawal = async (req, res) => {
+// List pending withdrawals
+exports.listPendingWithdrawals = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const userBalance = req.user.balance;
-        const { amount, method, accountNumber } = req.body;
-        const withdrawalAmount = parseFloat(amount);
+        const sql = `
+            SELECT t.id, t.userid, u.email as useremail, t.amount, t.method, t.accountnumber, t.timestamp as requestedat
+            FROM transactions t
+            JOIN users u ON t.userid = u.id
+            WHERE t.type = 'Withdrawal' AND t.status = 'Pending'
+            ORDER BY t.timestamp ASC
+        `;
+        const { rows } = await query(sql);
+        res.json({ message: "Pending withdrawals fetched successfully.", data: rows });
+    } catch (error) {
+        console.error("ADMIN_LIST_WITHDRAWALS_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to retrieve pending withdrawals." });
+    }
+};
 
-        if (userBalance < withdrawalAmount) {
-            return res.status(400).json({ message: `Insufficient balance.` });
+// Approve a withdrawal request
+exports.approveWithdrawal = async (req, res) => {
+    const client = await pool.connect();
+    try {
+        const { transactionId } = req.params;
+        const adminId = req.admin.id;
+
+        await client.query('BEGIN');
+
+        const { rows } = await client.query("SELECT * FROM transactions WHERE id = $1 AND type = 'Withdrawal' AND status = 'Pending' FOR UPDATE", [transactionId]);
+        const transaction = rows[0];
+
+        if (!transaction) {
+            await client.query('ROLLBACK');
+            return res.status(404).json({ message: "Pending withdrawal not found or already processed." });
+        }
+
+        const userResult = await client.query("SELECT balance FROM users WHERE id = $1", [transaction.userid]);
+        const user = userResult.rows[0];
+
+        if (!user || user.balance < transaction.amount) {
+            await client.query('ROLLBACK');
+            return res.status(400).json({ message: `Cannot approve withdrawal. User has insufficient balance.` });
+        }
+
+        await client.query("UPDATE users SET balance = balance - $1 WHERE id = $2", [transaction.amount, transaction.userid]);
+        
+        const newDescription = `Withdrawal to ${transaction.accountnumber} approved by Admin ID ${adminId}.`;
+        await client.query("UPDATE transactions SET status = 'Approved', adminProcessedBy = $1, description = $2 WHERE id = $3", [adminId, newDescription, transactionId]);
+        
+        await client.query('COMMIT');
+        
+        res.json({ message: `Withdrawal ID ${transactionId} approved successfully.` });
+
+    } catch (error) {
+        await client.query('ROLLBACK');
+        console.error("ADMIN_APPROVE_WITHDRAWAL_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to approve withdrawal." });
+    } finally {
+        client.release();
+    }
+};
+
+// Reject a withdrawal request
+exports.rejectWithdrawal = async (req, res) => {
+    try {
+        const { transactionId } = req.params;
+        const adminId = req.admin.id;
+        
+        const newDescription = `Withdrawal rejected by Admin ID ${adminId}.`;
+        const result = await query("UPDATE transactions SET status = 'Rejected', adminProcessedBy = $1, description = $2 WHERE id = $3 AND type = 'Withdrawal' AND status = 'Pending'", [adminId, newDescription, transactionId]);
+        
+        if (result.rowCount === 0) {
+            return res.status(404).json({ message: "Pending withdrawal not found or already processed." });
         }
         
-        const MINIMUM_WITHDRAWAL = 100;
-        if (withdrawalAmount < MINIMUM_WITHDRAWAL) {
-            return res.status(400).json({ message: `Minimum withdrawal amount is ${MINIMUM_WITHDRAWAL} PKR.` });
-        }
-
-        const referralCheckResult = await query("SELECT COUNT(*) as count FROM users WHERE referredBy = $1 AND hasMadeFirstInvestment = TRUE", [userId]);
-        const activeReferralCount = parseInt(referralCheckResult.rows[0].count);
-        if (activeReferralCount < 1) {
-            return res.status(403).json({ message: "Withdrawal requirement not met: You need at least one referred user who has made an investment." });
-        }
-
-        const description = `User withdrawal request to ${accountNumber.trim()} via ${method}.`;
-        const sql = `INSERT INTO transactions (userId, type, amount, status, method, accountNumber, description) VALUES ($1, 'Withdrawal', $2, 'Pending', $3, $4, $5) RETURNING id`;
-        const { rows } = await query(sql, [userId, withdrawalAmount, method, accountNumber.trim(), description]);
-
-        res.status(201).json({ message: "Withdrawal request submitted successfully and is pending approval.", transactionId: rows[0].id });
-
+        res.json({ message: `Withdrawal ID ${transactionId} rejected successfully.` });
     } catch (error) {
-        console.error("REQUEST_WITHDRAWAL_ERROR:", error.message, error.stack);
-        res.status(500).json({ message: "Could not submit withdrawal request." });
+        console.error("ADMIN_REJECT_WITHDRAWAL_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to reject withdrawal." });
     }
 };
 
-// Get User Transaction History
-exports.getTransactionHistory = async (req, res) => {
+// List all transactions for admin view
+exports.listAllTransactions = async (req, res) => {
     try {
-        const userId = req.user.id;
-        const sql = `SELECT id, type, amount, status, description, method, accountNumber, transactionidexternal, screenshoturl, timestamp FROM transactions WHERE userId = $1 ORDER BY timestamp DESC`;
-        const { rows } = await query(sql, [userId]);
-        res.json({ message: "Transaction history fetched successfully.", data: rows });
+        const searchTerm = req.query.search || '';
+        let sql = `
+            SELECT t.*, u.email as useremail
+            FROM transactions t JOIN users u ON t.userid = u.id
+        `;
+        const params = [];
+
+        if (searchTerm) {
+            sql += ` WHERE (u.email ILIKE $1 OR t.type ILIKE $1 OR t.status ILIKE $1 OR t.description ILIKE $1 OR t.method ILIKE $1 OR t.accountnumber ILIKE $1 OR t.transactionidexternal ILIKE $1)`;
+            params.push(`%${searchTerm}%`);
+        }
+        sql += ` ORDER BY t.timestamp DESC`;
+
+        const { rows } = await query(sql, params);
+        res.json({ message: "All transactions fetched successfully.", data: rows });
     } catch (error) {
-        console.error("GET_HISTORY_ERROR:", error.message, error.stack);
-        res.status(500).json({ message: "Could not retrieve transaction history." });
+        console.error("ADMIN_LIST_ALL_TRANSACTIONS_ERROR:", error.message, error.stack);
+        res.status(500).json({ message: "Failed to retrieve transaction history." });
     }
 };
