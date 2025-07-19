@@ -1,63 +1,75 @@
 // src/controllers/transactionController.js
+
 const { query, pool } = require('../config/database');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-// --- Multer Setup (No DB calls, no change needed) ---
 
+// --- Multer Setup for Deposit Screenshots ---
+
+// 1. Define the storage configuration for where to save files
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         // Use the UPLOADS_DIR environment variable for production, fallback to a local path for development.
         const uploadPath = process.env.UPLOADS_DIR || path.join(__dirname, '..', '..', 'public', 'uploads');
         
-        // This log will show in Railway where Multer is trying to save the file.
-        console.log(`[MULTER DEBUG] Saving file to destination: ${uploadPath}`);
-
-        // Ensure the directory exists.
+        // Ensure the directory exists before saving.
         if (!fs.existsSync(uploadPath)) {
-            console.log(`[MULTER DEBUG] Directory does not exist. Creating: ${uploadPath}`);
             try {
                 fs.mkdirSync(uploadPath, { recursive: true });
             } catch (error) {
-                console.error(`[MULTER DEBUG] FAILED to create directory: ${uploadPath}`, error);
-                return cb(error, null); // Pass error back to Multer
+                console.error(`[MULTER] FAILED to create directory: ${uploadPath}`, error);
+                return cb(error); // Pass error to Multer
             }
         }
         cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
-        const uniqueFilename = `${req.user.id}-${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+        // Create a unique and sanitized filename
+        const uniqueFilename = `${req.user.id}-${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
         cb(null, uniqueFilename);
     }
 });
 
+// 2. Define the file filter function to accept only images
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/gif') {
+        cb(null, true); // Accept file
+    } else {
+        cb(new Error('Invalid file type. Only JPG, PNG, or GIF are allowed.'), false); // Reject file
+    }
+};
+
+// 3. Create the Multer instance and export it as middleware
+// This middleware will use the 'storage' and 'fileFilter' defined above.
 exports.uploadScreenshot = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-    fileFilter: fileFilter
-}).single('screenshot');
+    fileFilter: fileFilter // Use the fileFilter function
+}).single('screenshot'); // 'screenshot' is the field name from the frontend form
 
 
-// --- User Invests in a Plan ---
+// --- Controller Functions ---
+
+// User Invests in a Plan
 exports.investInPlan = async (req, res) => {
     const client = await pool.connect();
     try {
         const userId = req.user.id;
-        const originalUser = req.user; // User state before this transaction
+        const originalUser = req.user;
         const { planId } = req.body;
         const numericPlanId = parseInt(planId);
 
-        const planResult = await query("SELECT * FROM investment_plans WHERE id = $1 AND isActive = TRUE", [numericPlanId]);
+        const planResult = await client.query("SELECT * FROM investment_plans WHERE id = $1 AND isActive = TRUE", [numericPlanId]);
         const plan = planResult.rows[0];
 
         if (!plan) {
             return res.status(404).json({ message: "Investment plan not found or is inactive." });
         }
 
-        if (originalUser.balance < plan.investmentamount) { // Note pg returns lowercase
+        if (originalUser.balance < plan.investmentamount) {
             return res.status(400).json({ message: `Insufficient balance. You need ${plan.investmentamount.toFixed(2)} PKR.` });
         }
-
         if (originalUser.activeplanid) {
             return res.status(400).json({ message: "You already have an active investment plan." });
         }
@@ -67,12 +79,11 @@ exports.investInPlan = async (req, res) => {
         const newBalance = originalUser.balance - plan.investmentamount;
         const investmentTime = new Date();
         await client.query("UPDATE users SET balance = $1, activePlanId = $2, hasMadeFirstInvestment = TRUE, lastCheckIn = $3 WHERE id = $4", [newBalance, plan.id, investmentTime, userId]);
-
+        
         await client.query("INSERT INTO transactions (userId, type, amount, status, description, method) VALUES ($1, 'Investment', $2, 'Completed', $3, 'Platform')", [userId, plan.investmentamount, `Invested in ${plan.name}`]);
 
-        // Referral Bonus Logic
         if (!originalUser.hasmadefirstinvestment && originalUser.referredby) {
-            const REFERRAL_PERCENTAGE = 0.10; // 10%
+            const REFERRAL_PERCENTAGE = 0.10;
             const calculatedBonus = parseFloat((plan.investmentamount * REFERRAL_PERCENTAGE).toFixed(2));
             const referrerId = originalUser.referredby;
             await client.query("UPDATE users SET balance = balance + $1 WHERE id = $2", [calculatedBonus, referrerId]);
@@ -92,8 +103,7 @@ exports.investInPlan = async (req, res) => {
     }
 };
 
-
-// --- User Requests a Deposit ---
+// User Requests a Deposit
 exports.requestDeposit = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -114,15 +124,16 @@ exports.requestDeposit = async (req, res) => {
 
     } catch (error) {
         console.error("REQUEST_DEPOSIT_ERROR:", error.message, error.stack);
-        if (req.file) { // Attempt to clean up uploaded file on DB error
-            fs.unlinkSync(req.file.path);
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) console.error("Error cleaning up orphaned upload file:", err);
+            });
         }
         res.status(500).json({ message: "Could not submit deposit request." });
     }
 };
 
-
-// --- User Requests a Withdrawal ---
+// User Requests a Withdrawal
 exports.requestWithdrawal = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -139,7 +150,6 @@ exports.requestWithdrawal = async (req, res) => {
             return res.status(400).json({ message: `Minimum withdrawal amount is ${MINIMUM_WITHDRAWAL} PKR.` });
         }
 
-        // Referral condition check
         const referralCheckResult = await query("SELECT COUNT(*) as count FROM users WHERE referredBy = $1 AND hasMadeFirstInvestment = TRUE", [userId]);
         const activeReferralCount = parseInt(referralCheckResult.rows[0].count);
         if (activeReferralCount < 1) {
@@ -158,11 +168,11 @@ exports.requestWithdrawal = async (req, res) => {
     }
 };
 
-// --- Get User Transaction History ---
+// Get User Transaction History
 exports.getTransactionHistory = async (req, res) => {
     try {
         const userId = req.user.id;
-        const sql = `SELECT id, type, amount, status, description, method, accountNumber, transactionIdExternal, screenshotUrl, timestamp FROM transactions WHERE userId = $1 ORDER BY timestamp DESC`;
+        const sql = `SELECT id, type, amount, status, description, method, accountNumber, transactionidexternal, screenshoturl, timestamp FROM transactions WHERE userId = $1 ORDER BY timestamp DESC`;
         const { rows } = await query(sql, [userId]);
         res.json({ message: "Transaction history fetched successfully.", data: rows });
     } catch (error) {
