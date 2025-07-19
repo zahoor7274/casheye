@@ -1,5 +1,5 @@
 // src/server.js
-require('dotenv').config();
+require('dotenv').config(); // Load environment variables from .env file
 
 const express = require('express');
 const cors = require('cors');
@@ -7,17 +7,18 @@ const path = require('path');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const db = require('./config/database');
-const fs = require('fs');
+const fs = require('fs')
 
 const app = express();
 app.set('trust proxy', 1);
+//const PORT = process.env.PORT || 3000;
 
-// --- Core Middleware ---
+// --- Middleware ---
 app.use(helmet());
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json()); // Parse JSON request bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
+// app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // --- PATH DEFINITIONS (CORRECTED) ---
 const publicDirPath = path.join(__dirname, '..', 'public');
@@ -56,24 +57,52 @@ app.get('/uploads/:filename', (req, res, next) => {
 app.use(express.static(publicDirPath));
 
 
-// --- API ROUTES ---
-// ... (your rate limiter and app.use('/api/...') routes)
-const apiLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 200, message: { message: "Too many requests to our API from this IP, please try again after 15 minutes." }, standardHeaders: true, legacyHeaders: false });
+
+// --- Basic Route ---
+app.get('/', (req, res) => {
+    res.send('CashEye API is running!');
+});
+
+
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Allow 100 requests to any /api endpoint per 15 minutes per IP
+    message: { message: "Too many requests to our API from this IP, please try again after 15 minutes." },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
 app.use('/api', apiLimiter);
+// --- API Routes ---
+console.log("[ROUTER_CHECK] Importing route modules...");
 const authUserRoutes = require('./routes/authUserRoutes');
+console.log("[ROUTER_CHECK] authUserRoutes is:", typeof authUserRoutes);
 const platformRoutes = require('./routes/platformRoutes');
+console.log("[ROUTER_CHECK] platformRoutes is:", typeof platformRoutes);
 const transactionUserRoutes = require('./routes/transactionUserRoutes');
+console.log("[ROUTER_CHECK] transactionUserRoutes is:", typeof transactionUserRoutes);
 const userProfileRoutes = require('./routes/userProfileRoutes');
-const adminAuthRoutes = require('./routes/adminAuthRoutes');
-const adminDashboardRoutes = require('./routes/adminDashboardRoutes');
-const adminUserManagementRoutes = require('./routes/adminUserManagementRoutes');
-const adminTransactionRoutes = require('./routes/adminTransactionRoutes');
-const adminPlatformSettingsRoutes = require('./routes/adminPlatformSettingsRoutes');
+console.log("[ROUTER_CHECK] userProfileRoutes is:", typeof userProfileRoutes);
 
 app.use('/api/auth', authUserRoutes);
 app.use('/api/platform', platformRoutes);
 app.use('/api/transactions', transactionUserRoutes);
 app.use('/api/users', userProfileRoutes);
+
+// Admin Routes
+const adminAuthRoutes = require('./routes/adminAuthRoutes');
+console.log("[ROUTER_CHECK] adminAuthRoutes is:", typeof adminAuthRoutes);
+const adminDashboardRoutes = require('./routes/adminDashboardRoutes');
+console.log("[ROUTER_CHECK] adminDashboardRoutes is:", typeof adminDashboardRoutes);
+const adminUserManagementRoutes = require('./routes/adminUserManagementRoutes');
+console.log("[ROUTER_CHECK] adminUserManagementRoutes is:", typeof adminUserManagementRoutes);
+const adminTransactionRoutes = require('./routes/adminTransactionRoutes');
+console.log("[ROUTER_CHECK] adminTransactionRoutes is:", typeof adminTransactionRoutes);
+const adminPlatformSettingsRoutes = require('./routes/adminPlatformSettingsRoutes');
+console.log("[ROUTER_CHECK] adminPlatformSettingsRoutes is:", typeof adminPlatformSettingsRoutes);
+
+console.log("[ROUTER_CHECK] All route modules imported. Proceeding to mount.");
+// const adminManageAdminsRoutes = require('./routes/adminManageAdminsRoutes'); // For UI demo, real admin management needs careful thought
+
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/admin/dashboard', adminDashboardRoutes);
 app.use('/api/admin/users', adminUserManagementRoutes);
@@ -81,32 +110,41 @@ app.use('/api/admin/transactions', adminTransactionRoutes);
 app.use('/api/admin/platform', adminPlatformSettingsRoutes);
 
 
-// --- CATCH-ALL ROUTE ---
-app.get('*', (req, res) => {
-    res.sendFile(path.resolve(publicDirPath, 'index.html'));
+console.log("[ROUTER_CHECK] All API routes mounted successfully.");
+// app.use('/api/admin/manage', adminManageAdminsRoutes);
+
+// --- CATCH-ALL ROUTE for Single Page App behavior ---
+app.get(/^(?!\/api).*/, (req, res) => {
+    // The regex /^(?!\/api).*/ means: "match any path that does NOT start with /api"
+    console.log(`[CATCH-ALL] Serving index.html for non-API route: ${req.path}`);
+    res.sendFile(path.resolve(__dirname, '..', 'public', 'index.html'));
 });
 
-// --- Global Error Handler ---
+// --- Global Error Handler (Basic) ---
 app.use((err, req, res, next) => {
-    console.error("GLOBAL_ERROR_HANDLER:", err.stack);
-    res.status(500).json({ message: 'An unexpected server error occurred.' });
+    console.error(err.stack);
+    res.status(500).json({ message: 'Something went wrong!', error: err.message });
 });
 
-// --- Start Server ---
+
+
 const PORT = process.env.PORT || 3000;
+
 app.listen(PORT, () => {
-    console.log(`SERVER_LOG: Server is now listening on port ${PORT}.`);
+    console.log(`SERVER_LOG: [12] SUCCESS! Server is now listening on port ${PORT}.`);
     db.initTables()
         .then(() => {
-            console.log('SERVER_LOG: Database tables initialization check complete.');
+            console.log('SERVER_LOG: [14] Database tables initialization successful.');
+            // This is how you call an async function from a .then() block
             const { createDefaultAdmin } = require('./models/adminModel');
             createDefaultAdmin()
-                .then(msg => console.log(`SERVER_LOG: ${msg}`))
-                .catch(err => console.error("SERVER_LOG_ERROR: Error during default admin creation:", err));
+                .then(msg => console.log(msg))
+                .catch(err => console.error("Error during default admin creation:", err));
+            console.log("SERVER_LOG: [15] App is fully ready and healthy.");
         })
         .catch(err => {
-            console.error('SERVER_LOG_FATAL: FAILED to initialize database tables!', err);
-            process.exit(1);
+            console.error('SERVER_LOG_FATAL: [14a] FAILED to initialize database tables!', err);
+            process.exit(1); // Exit if DB init fails
         });
 });
 
