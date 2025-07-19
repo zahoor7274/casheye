@@ -10,8 +10,12 @@ const fs = require('fs');
 // 1. Define the storage configuration for where to save files
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
+        console.log("--- MULTER DESTINATION DEBUG ---");
+        console.log("Value of process.env.UPLOADS_DIR:", process.env.UPLOADS_DIR);
         // Use the UPLOADS_DIR environment variable for production, fallback to a local path for development.
         const uploadPath = process.env.UPLOADS_DIR || path.join(__dirname, '..', '..', 'public', 'uploads');
+        console.log(`Final uploadPath determined: ${uploadPath}`);
+        console.log("---------------------------------");
         
         // Ensure the directory exists before saving.
         if (!fs.existsSync(uploadPath)) {
