@@ -370,6 +370,9 @@ exports.approveDeposit = async (req, res) => {
 };
 
 // Reject a deposit request
+// src/controllers/adminTransactionController.js
+// ...
+
 exports.rejectDeposit = async (req, res) => {
     try {
         const { transactionId } = req.params;
@@ -381,19 +384,30 @@ exports.rejectDeposit = async (req, res) => {
         if (!transaction) {
             return res.status(404).json({ message: "Pending deposit not found or already processed." });
         }
+
         
-        const newDescription = `Deposit rejected by Admin ID ${adminId}.`;
-        const result = await query("UPDATE transactions SET status = 'Rejected', adminProcessedBy = $1, description = $2 WHERE id = $3", [adminId, newDescription, transactionId]);
-        
-        if (result.rowCount === 0) {
-            return res.status(404).json({ message: "Update failed, transaction may have been processed by another admin." });
-        }
+        // ... (logic to update transaction status to 'Rejected')
 
         if (transaction.screenshoturl) {
-            const screenshotPath = path.join(__dirname, '..', '..', 'public', transaction.screenshoturl);
+            // Define the base uploads directory using the same logic as server.js
+            const uploadsBaseDir = process.env.UPLOADS_DIR || path.join(__dirname, '..', '..', 'public', 'uploads');
+            // Get just the filename from the URL path
+            const filename = path.basename(transaction.screenshoturl);
+            const screenshotPath = path.join(uploadsBaseDir, filename);
+
+            console.log(`[REJECT DEBUG] Attempting to delete file at path: ${screenshotPath}`);
+
             fs.unlink(screenshotPath, (unlinkErr) => {
-                if (unlinkErr) console.warn(`Failed to delete screenshot ${screenshotPath}:`, unlinkErr.message);
-                else console.log(`Screenshot ${screenshotPath} deleted for rejected deposit.`);
+                if (unlinkErr) {
+                    // This is okay if the file is already gone (ENOENT)
+                    if (unlinkErr.code !== 'ENOENT') {
+                        console.warn(`[REJECT DEBUG] Failed to delete screenshot ${screenshotPath}:`, unlinkErr.message);
+                    } else {
+                        console.log(`[REJECT DEBUG] Screenshot not found at ${screenshotPath}, which may be expected.`);
+                    }
+                } else {
+                    console.log(`[REJECT DEBUG] Screenshot ${screenshotPath} deleted for rejected deposit.`);
+                }
             });
         }
         
@@ -401,6 +415,7 @@ exports.rejectDeposit = async (req, res) => {
     } catch (error) {
         console.error("ADMIN_REJECT_DEPOSIT_ERROR:", error.message, error.stack);
         res.status(500).json({ message: "Failed to reject deposit." });
+    
     }
 };
 

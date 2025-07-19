@@ -4,25 +4,33 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 // --- Multer Setup (No DB calls, no change needed) ---
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
+        // Use the UPLOADS_DIR environment variable for production, fallback to a local path for development.
         const uploadPath = process.env.UPLOADS_DIR || path.join(__dirname, '..', '..', 'public', 'uploads');
+        
+        // This log will show in Railway where Multer is trying to save the file.
+        console.log(`[MULTER DEBUG] Saving file to destination: ${uploadPath}`);
+
+        // Ensure the directory exists.
         if (!fs.existsSync(uploadPath)) {
-            fs.mkdirSync(uploadPath, { recursive: true });
+            console.log(`[MULTER DEBUG] Directory does not exist. Creating: ${uploadPath}`);
+            try {
+                fs.mkdirSync(uploadPath, { recursive: true });
+            } catch (error) {
+                console.error(`[MULTER DEBUG] FAILED to create directory: ${uploadPath}`, error);
+                return cb(error, null); // Pass error back to Multer
+            }
         }
         cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
-        cb(null, `${req.user.id}-${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`);
+        const uniqueFilename = `${req.user.id}-${Date.now()}-${file.originalname.replace(/\s+/g, '_')}`;
+        cb(null, uniqueFilename);
     }
 });
-const fileFilter = (req, file, cb) => {
-    if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png' || file.mimetype === 'image/gif') {
-        cb(null, true);
-    } else {
-        cb(new Error('Invalid file type. Only JPG, PNG, GIF allowed.'), false);
-    }
-};
+
 exports.uploadScreenshot = multer({
     storage: storage,
     limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
