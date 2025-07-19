@@ -502,11 +502,11 @@ document.addEventListener('DOMContentLoaded', () => {
         withdrawals.forEach(withdrawal => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${withdrawal.userEmail || 'N/A'}</td>
+                <td>${withdrawal.useremail || 'N/A'}</td>
                 <td>${(withdrawal.amount || 0).toFixed(2)}</td>
                 <td>${withdrawal.method || 'N/A'}</td>
-                <td>${withdrawal.accountNumber || 'N/A'}</td>
-                <td>${formatDate(withdrawal.requestedAt)}</td>
+                <td>${withdrawal.accountnumber || 'N/A'}</td>
+                <td>${formatDate(withdrawal.requestedat)}</td>
                 <td>
                     <button type="button" class="action-btn btn-approve" data-id="${withdrawal.id}" data-action="approve">Approve</button>
                     <button type="button" class="action-btn btn-reject" data-id="${withdrawal.id}" data-action="reject">Reject</button>
@@ -547,7 +547,7 @@ document.addEventListener('DOMContentLoaded', () => {
         transactions.forEach(tx => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${tx.userEmail || 'N/A'}</td>
+                <td>${tx.useremail || 'N/A'}</td>
                 <td>${tx.type || 'N/A'}</td>
                 <td>${tx.status || 'N/A'}</td>
                 <td>${(tx.amount || 0).toFixed(2)}</td>
