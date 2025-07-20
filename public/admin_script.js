@@ -2,7 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', () => {
     // --- Configuration ---
-    const API_BASE_URL = 'https://casheye-production.up.railway.app/api/admin'; // CHANGE THIS (HTTPS for production)
+    const API_BASE_URL = 'https://www.casheye.online/api/admin'; // CHANGE THIS (HTTPS for production)
     let currentAdminAuthToken = localStorage.getItem('adminAuthToken');
     let currentEditingUserId = null;
     let demoAdmins = [{ username: 'professor', isDefault: true }];

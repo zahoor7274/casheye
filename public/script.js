@@ -1,5 +1,5 @@
 // --- Configuration ---
-const API_BASE_URL = 'https://casheye-production.up.railway.app/api'; // CHANGE THIS TO YOUR ACTUAL (HTTPS) BACKEND URL IN PRODUCTION
+const API_BASE_URL = 'https://www.casheye.online/api'; // CHANGE THIS TO YOUR ACTUAL (HTTPS) BACKEND URL IN PRODUCTION
 
 // --- Global State ---
 let currentUserData = null;
