@@ -73,15 +73,10 @@ const apiLimiter = rateLimit({
 });
 app.use('/api', apiLimiter);
 // --- API Routes ---
-console.log("[ROUTER_CHECK] Importing route modules...");
 const authUserRoutes = require('./routes/authUserRoutes');
-console.log("[ROUTER_CHECK] authUserRoutes is:", typeof authUserRoutes);
 const platformRoutes = require('./routes/platformRoutes');
-console.log("[ROUTER_CHECK] platformRoutes is:", typeof platformRoutes);
 const transactionUserRoutes = require('./routes/transactionUserRoutes');
-console.log("[ROUTER_CHECK] transactionUserRoutes is:", typeof transactionUserRoutes);
 const userProfileRoutes = require('./routes/userProfileRoutes');
-console.log("[ROUTER_CHECK] userProfileRoutes is:", typeof userProfileRoutes);
 
 app.use('/api/auth', authUserRoutes);
 app.use('/api/platform', platformRoutes);
@@ -90,17 +85,11 @@ app.use('/api/users', userProfileRoutes);
 
 // Admin Routes
 const adminAuthRoutes = require('./routes/adminAuthRoutes');
-console.log("[ROUTER_CHECK] adminAuthRoutes is:", typeof adminAuthRoutes);
 const adminDashboardRoutes = require('./routes/adminDashboardRoutes');
-console.log("[ROUTER_CHECK] adminDashboardRoutes is:", typeof adminDashboardRoutes);
 const adminUserManagementRoutes = require('./routes/adminUserManagementRoutes');
-console.log("[ROUTER_CHECK] adminUserManagementRoutes is:", typeof adminUserManagementRoutes);
 const adminTransactionRoutes = require('./routes/adminTransactionRoutes');
-console.log("[ROUTER_CHECK] adminTransactionRoutes is:", typeof adminTransactionRoutes);
 const adminPlatformSettingsRoutes = require('./routes/adminPlatformSettingsRoutes');
-console.log("[ROUTER_CHECK] adminPlatformSettingsRoutes is:", typeof adminPlatformSettingsRoutes);
 
-console.log("[ROUTER_CHECK] All route modules imported. Proceeding to mount.");
 // const adminManageAdminsRoutes = require('./routes/adminManageAdminsRoutes'); // For UI demo, real admin management needs careful thought
 
 app.use('/api/admin/auth', adminAuthRoutes);
@@ -110,15 +99,14 @@ app.use('/api/admin/transactions', adminTransactionRoutes);
 app.use('/api/admin/platform', adminPlatformSettingsRoutes);
 
 
-console.log("[ROUTER_CHECK] All API routes mounted successfully.");
 // app.use('/api/admin/manage', adminManageAdminsRoutes);
 
 // --- CATCH-ALL ROUTE for Single Page App behavior ---
-app.get(/^(?!\/api).*/, (req, res) => {
-    // The regex /^(?!\/api).*/ means: "match any path that does NOT start with /api"
-    console.log(`[CATCH-ALL] Serving index.html for non-API route: ${req.path}`);
-    res.sendFile(path.resolve(__dirname, '..', 'public', 'index.html'));
-});
+//app.get(/^(?!\/api).*/, (req, res) => {
+    //The regex /^(?!\/api).*/ means: "match any path that does NOT start with /api"
+//    console.log(`[CATCH-ALL] Serving index.html for non-API route: ${req.path}`);
+//    res.sendFile(path.resolve(__dirname, '..', 'public', 'index.html'));
+//});
 
 // --- Global Error Handler (Basic) ---
 app.use((err, req, res, next) => {
